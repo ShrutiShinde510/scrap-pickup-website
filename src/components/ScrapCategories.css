@@ -1,0 +1,149 @@
+.categories-section {
+  background: #f3f4f6;
+  padding: 80px 20px;
+}
+
+
+
+.categories-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.section-title {
+  font-size: 36px;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 50px;
+  color: #1f2937;
+}
+
+.categories-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 25px;
+}
+
+.category-card {
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  transition: all 0.3s;
+}
+
+.category-card:hover {
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+  transform: translateY(-5px);
+}
+
+.category-name {
+  font-size: 22px;
+  font-weight: bold;
+  margin-bottom: 10px;
+  color: #1f2937;
+}
+
+.category-price {
+  color: #059669;
+  font-weight: bold;
+  font-size: 18px;
+  margin-bottom: 15px;
+}
+
+.category-items {
+  list-style: none;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.category-items li {
+  margin-bottom: 6px;
+}
+
+@media (max-width: 768px) {
+  .categories-grid {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+
+  .section-title {
+    font-size:28px;
+}
+}
+
+.materials-section {
+  padding: 80px 20px;
+}
+
+.materials-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 30px;
+  margin-top: 50px;
+}
+
+.materials-card {
+  padding: 40px;
+  border-radius: 12px;
+}
+
+.materials-card.accepted {
+  background: #ecfdf5;
+}
+
+.materials-card.rejected {
+  background: #fef2f2;
+}
+
+.materials-card h3 {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 25px;
+}
+
+.materials-card.accepted h3 {
+  color: #065f46;
+}
+
+.materials-card.rejected h3 {
+  color: #991b1b;
+}
+
+.materials-card ul {
+  list-style: none;
+}
+
+.materials-card li {
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.checkmark {
+  color: #059669;
+  font-weight: bold;
+}
+
+.crossmark {
+  color: #dc2626;
+  font-weight: bold;
+}
+
+@media (max-width: 768px) {
+  .section-title {
+    font-size: 28px;
+  }
+
+  .steps-grid {
+    grid-template-columns: 1fr;
+  }
+ .materials-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .impact-number {
+    font-size:36px;
+}
+}
