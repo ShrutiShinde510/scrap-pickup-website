@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock, User, Phone, MapPin, UserPlus, Upload } from 'lucide-react';
+import api from '../api/axios';
 import './SignupPage.css';
 
 const SignupPage = () => {
@@ -22,8 +23,8 @@ const SignupPage = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const validateStep1 = () => {
-    if (!formData.fullName || !formData.email || !formData.phone || 
-        !formData.address || !formData.city) {
+    if (!formData.fullName || !formData.email || !formData.phone ||
+      !formData.address || !formData.city) {
       setError('Please fill all required fields');
       return false;
     }
@@ -82,41 +83,31 @@ const SignupPage = () => {
 
     setIsLoading(true);
 
-    // Simulate API call
-    setTimeout(() => {
-      // Save user to localStorage (simulating database)
-      const users = JSON.parse(localStorage.getItem('users') || '[]');
-      
-      // Check if email already exists
-      if (users.find(u => u.email === formData.email)) {
-        setError('Email already registered. Please login.');
-        setIsLoading(false);
-        return;
-      }
-
-      const newUser = {
-        id: 'user_' + Date.now(),
-        fullName: formData.fullName,
+    try {
+      const payload = {
         email: formData.email,
-        phone: formData.phone,
+        password: formData.password,
+        full_name: formData.fullName,
+        phone_number: formData.phone,
         address: formData.address,
         city: formData.city,
-        password: formData.password,
-        isVerified: false,
-        verificationCode: Math.floor(100000 + Math.random() * 900000).toString(),
-        createdAt: new Date().toISOString()
       };
 
-      users.push(newUser);
-      localStorage.setItem('users', JSON.stringify(users));
-      
-      // Store pending verification email
-      localStorage.setItem('pendingVerification', formData.email);
+      await api.post('/register/client/', payload);
 
-      alert('Account created! Please check your email for verification code.');
-      navigate('/verify-email');
+      alert('Account created! Please login.');
+      navigate('/login');
+    } catch (err) {
+      if (err.response && err.response.data) {
+        // Handle generic errors or field specific errors
+        const errorMsg = Object.values(err.response.data).flat().join(', ');
+        setError(errorMsg || 'Registration failed. Please try again.');
+      } else {
+        setError('Registration failed. Please try again.');
+      }
+    } finally {
       setIsLoading(false);
-    }, 2000);
+    }
   };
 
   return (
@@ -171,7 +162,7 @@ const SignupPage = () => {
                         type="text"
                         placeholder="Enter your full name"
                         value={formData.fullName}
-                        onChange={(e) => setFormData({...formData, fullName: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                       />
                     </div>
                   </div>
@@ -184,7 +175,7 @@ const SignupPage = () => {
                         type="email"
                         placeholder="Enter your email"
                         value={formData.email}
-                        onChange={(e) => setFormData({...formData, email: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                       />
                     </div>
                   </div>
@@ -197,7 +188,7 @@ const SignupPage = () => {
                         type="tel"
                         placeholder="+91 1234567890"
                         value={formData.phone}
-                        onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                       />
                     </div>
                   </div>
@@ -210,7 +201,7 @@ const SignupPage = () => {
                         type="text"
                         placeholder="Enter your address"
                         value={formData.address}
-                        onChange={(e) => setFormData({...formData, address: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                       />
                     </div>
                   </div>
@@ -220,7 +211,7 @@ const SignupPage = () => {
                     <select
                       className="select-input"
                       value={formData.city}
-                      onChange={(e) => setFormData({...formData, city: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                     >
                       <option value="">Select City</option>
                       <option value="Mumbai">Mumbai</option>
@@ -247,7 +238,7 @@ const SignupPage = () => {
                         type={showPassword ? "text" : "password"}
                         placeholder="Min 6 characters"
                         value={formData.password}
-                        onChange={(e) => setFormData({...formData, password: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                         disabled={isLoading}
                       />
                       <button
@@ -269,7 +260,7 @@ const SignupPage = () => {
                         type={showConfirmPassword ? "text" : "password"}
                         placeholder="Re-enter password"
                         value={formData.confirmPassword}
-                        onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                         disabled={isLoading}
                       />
                       <button
@@ -287,7 +278,7 @@ const SignupPage = () => {
                       <input
                         type="checkbox"
                         checked={formData.agreeTerms}
-                        onChange={(e) => setFormData({...formData, agreeTerms: e.target.checked})}
+                        onChange={(e) => setFormData({ ...formData, agreeTerms: e.target.checked })}
                       />
                       <span>I agree to the <a href="#">Terms & Conditions</a> and <a href="#">Privacy Policy</a></span>
                     </label>

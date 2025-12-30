@@ -3,18 +3,19 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Upload, User, Mail, Phone, Building, MapPin, Eye, EyeOff, CheckCircle, Clock } from 'lucide-react';
 import { scrapCategories } from '../data/scrapData';
+import api from '../api/axios';
 import './VendorRegistrationPage.css';
 
 const VendorRegistrationPage = () => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1); // 1: Basic Info, 2: Business Details, 3: Email OTP, 4: Phone OTP, 5: Success
-  
+
   const [formData, setFormData] = useState({
     // Personal Info
     contactPerson: '',
     email: '',
     phone: '',
-    
+
     // Business Info
     businessName: '',
     businessType: '',
@@ -22,13 +23,13 @@ const VendorRegistrationPage = () => {
     city: '',
     scrapCategories: [],
     operatingAreas: '',
-    
+
     // Documents
     businessLicense: null,
     gstCertificate: null,
     addressProof: null,
     idProof: null,
-    
+
     // Password
     password: '',
     confirmPassword: ''
@@ -36,8 +37,8 @@ const VendorRegistrationPage = () => {
 
   const [emailOTP, setEmailOTP] = useState(['', '', '', '', '', '']);
   const [phoneOTP, setPhoneOTP] = useState(['', '', '', '', '', '']);
-  const [generatedEmailOTP, setGeneratedEmailOTP] = useState('');
-  const [generatedPhoneOTP, setGeneratedPhoneOTP] = useState('');
+  // const [generatedEmailOTP, setGeneratedEmailOTP] = useState(''); // Served by backend
+  // const [generatedPhoneOTP, setGeneratedPhoneOTP] = useState(''); // Served by backend
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -66,15 +67,15 @@ const VendorRegistrationPage = () => {
 
   // Step 2: Business Details
   const validateStep2 = () => {
-    if (!formData.businessName || !formData.businessType || !formData.address || 
-        !formData.city || formData.scrapCategories.length === 0 || !formData.operatingAreas ||
-        !formData.password || !formData.confirmPassword) {
+    if (!formData.businessName || !formData.businessType || !formData.address ||
+      !formData.city || formData.scrapCategories.length === 0 || !formData.operatingAreas ||
+      !formData.password || !formData.confirmPassword) {
       setError('Please fill all required fields');
       return false;
     }
 
-    if (!formData.businessLicense || !formData.gstCertificate || 
-        !formData.addressProof || !formData.idProof) {
+    if (!formData.businessLicense || !formData.gstCertificate ||
+      !formData.addressProof || !formData.idProof) {
       setError('Please upload all required documents');
       return false;
     }
@@ -92,17 +93,31 @@ const VendorRegistrationPage = () => {
     return true;
   };
 
-  const handleStep1Next = () => {
+  const handleStep1Next = async () => {
     setError('');
     if (validateStep1()) {
-      // Generate Email OTP
-      const otp = Math.floor(100000 + Math.random() * 900000).toString();
-      setGeneratedEmailOTP(otp);
-      console.log('='.repeat(50));
-      console.log('EMAIL OTP:', otp);
-      console.log('='.repeat(50));
-      alert(`Email OTP sent to ${formData.email}\n\nDEMO OTP: ${otp}`);
-      setCurrentStep(2);
+      setIsLoading(true);
+      try {
+        const response = await api.post('/otp/send/', {
+          contact: formData.email,
+          channel: 'email'
+        });
+
+        // In dev mode, we might want to log the mock OTP if returned
+        if (response.data.mock_otp) {
+          console.log('EMAIL OTP:', response.data.mock_otp);
+          alert(`Email OTP sent to ${formData.email}\n\nDEMO OTP: ${response.data.mock_otp}`);
+        } else {
+          alert(`Email OTP sent to ${formData.email}`);
+        }
+
+        setCurrentStep(2);
+      } catch (err) {
+        console.error("OTP Error:", err);
+        setError(err.response?.data?.error || 'Failed to send OTP. Please try again.');
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -113,65 +128,113 @@ const VendorRegistrationPage = () => {
     }
   };
 
-  const handleEmailOTPVerify = () => {
+  const handleEmailOTPVerify = async () => {
     const enteredOTP = emailOTP.join('');
-    
-    if (enteredOTP.length !== 6) {
-      setError('Please enter complete OTP');
-      return;
-    }
 
-    if (enteredOTP === generatedEmailOTP) {
-      setError('');
-      // Generate Phone OTP
-      const otp = Math.floor(100000 + Math.random() * 900000).toString();
-      setGeneratedPhoneOTP(otp);
-      console.log('='.repeat(50));
-      console.log('PHONE OTP:', otp);
-      console.log('='.repeat(50));
-      alert(`Phone OTP sent to ${formData.phone}\n\nDEMO OTP: ${otp}`);
-      setCurrentStep(4);
-    } else {
-      setError('Invalid OTP. Please try again.');
-      setEmailOTP(['', '', '', '', '', '']);
-    }
-  };
-
-  const handlePhoneOTPVerify = () => {
-    const enteredOTP = phoneOTP.join('');
-    
-    if (enteredOTP.length !== 6) {
-      setError('Please enter complete OTP');
+    if (enteredOTP.length < 6) {
+      setError('Please enter complete 6-digit OTP');
       return;
     }
 
     setIsLoading(true);
-    
-    setTimeout(() => {
-      if (enteredOTP === generatedPhoneOTP) {
-        // Save vendor data
-        const vendors = JSON.parse(localStorage.getItem('vendors') || '[]');
-        
-        const newVendor = {
-          id: 'vendor_' + Date.now(),
-          ...formData,
-          isEmailVerified: true,
-          isPhoneVerified: true,
-          isApproved: false,
-          registeredAt: new Date().toISOString()
-        };
 
-        vendors.push(newVendor);
-        localStorage.setItem('vendors', JSON.stringify(vendors));
-        
+    try {
+      await api.post('/otp/verify/', {
+        contact: formData.email,
+        otp: enteredOTP
+      });
+
+      setError('');
+
+      // Success! Now send Phone OTP
+      const response = await api.post('/otp/send/', {
+        contact: formData.phone,
+        channel: 'sms'
+      });
+
+      if (response.data.mock_otp) {
+        console.log('PHONE OTP:', response.data.mock_otp);
+        alert(`Phone OTP sent to ${formData.phone}\n\nDEMO OTP: ${response.data.mock_otp}`);
+      } else {
+        alert(`Phone OTP sent to ${formData.phone}`);
+      }
+
+      setCurrentStep(4);
+    } catch (err) {
+      console.error("OTP Verification Error:", err);
+      setError(err.response?.data?.error || 'Invalid OTP. Please try again.');
+      setEmailOTP(['', '', '', '', '', '']); // Clear input
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handlePhoneOTPVerify = async () => {
+    const enteredOTP = phoneOTP.join('');
+
+    if (enteredOTP.length < 6) {
+      setError('Please enter complete 6-digit OTP');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // 1. Verify Phone OTP
+      await api.post('/otp/verify/', {
+        contact: formData.phone,
+        otp: enteredOTP
+      });
+
+      // 2. Submit Registration
+      // ... proceeding to submit ...
+      try {
+        const formDataToSend = new FormData();
+        formDataToSend.append('email', formData.email);
+        formDataToSend.append('password', formData.password);
+        formDataToSend.append('full_name', formData.contactPerson);
+        formDataToSend.append('phone_number', formData.phone);
+        formDataToSend.append('address', formData.address);
+        formDataToSend.append('city', formData.city);
+
+        // Business Details
+        formDataToSend.append('business_name', formData.businessName);
+        formDataToSend.append('business_type', formData.businessType);
+        formDataToSend.append('operating_areas', formData.operatingAreas);
+
+        // Scrape Types (as array list for backend)
+        formData.scrapCategories.forEach(cat => formDataToSend.append('scrape_types', cat));
+
+        // Documents
+        if (formData.businessLicense) formDataToSend.append('business_license', formData.businessLicense);
+        if (formData.gstCertificate) formDataToSend.append('gst_certificate', formData.gstCertificate);
+        if (formData.addressProof) formDataToSend.append('address_proof', formData.addressProof);
+        if (formData.idProof) formDataToSend.append('id_proof', formData.idProof);
+
+        await api.post('/register/seller/', formDataToSend, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+
         setError('');
         setCurrentStep(5);
-      } else {
-        setError('Invalid OTP. Please try again.');
-        setPhoneOTP(['', '', '', '', '', '']);
+      } catch (err) {
+        console.error("Registration error:", err);
+        if (err.response && err.response.data) {
+          const errorMsg = Object.values(err.response.data).flat().join(', ');
+          setError(errorMsg || 'Registration failed. Please try again.');
+        } else {
+          setError('Registration failed. Please try again.');
+        }
       }
+    } catch (otpErr) {
+      console.error("OTP Verification Error:", otpErr);
+      setError(otpErr.response?.data?.error || 'Invalid OTP. Please try again.');
+      setPhoneOTP(['', '', '', '', '', '']);
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
   const handleOTPChange = (index, value, type) => {
@@ -206,7 +269,7 @@ const VendorRegistrationPage = () => {
     const updated = formData.scrapCategories.includes(category)
       ? formData.scrapCategories.filter(c => c !== category)
       : [...formData.scrapCategories, category];
-    setFormData({...formData, scrapCategories: updated});
+    setFormData({ ...formData, scrapCategories: updated });
   };
 
   const handleFileUpload = (e, field) => {
@@ -229,7 +292,7 @@ const VendorRegistrationPage = () => {
             <h1 className="vendor-title">Vendor Registration</h1>
             <p className="vendor-subtitle">Step 1 of 4: Basic Information</p>
             <div className="progress-bar">
-              <div className="progress-fill" style={{width: '25%'}}></div>
+              <div className="progress-fill" style={{ width: '25%' }}></div>
             </div>
           </div>
 
@@ -248,7 +311,7 @@ const VendorRegistrationPage = () => {
                   type="text"
                   placeholder="Enter your full name"
                   value={formData.contactPerson}
-                  onChange={(e) => setFormData({...formData, contactPerson: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, contactPerson: e.target.value })}
                 />
               </div>
             </div>
@@ -261,7 +324,7 @@ const VendorRegistrationPage = () => {
                   type="email"
                   placeholder="your@email.com"
                   value={formData.email}
-                  onChange={(e) => setFormData({...formData, email: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 />
               </div>
               <small className="input-hint">We'll send OTP to verify this email</small>
@@ -275,7 +338,7 @@ const VendorRegistrationPage = () => {
                   type="tel"
                   placeholder="+91 1234567890"
                   value={formData.phone}
-                  onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 />
               </div>
               <small className="input-hint">We'll send OTP to verify this number</small>
@@ -299,7 +362,7 @@ const VendorRegistrationPage = () => {
             <h1 className="vendor-title">Business Information</h1>
             <p className="vendor-subtitle">Step 2 of 4: Business Details</p>
             <div className="progress-bar">
-              <div className="progress-fill" style={{width: '50%'}}></div>
+              <div className="progress-fill" style={{ width: '50%' }}></div>
             </div>
           </div>
 
@@ -318,7 +381,7 @@ const VendorRegistrationPage = () => {
                   type="text"
                   placeholder="Enter registered business name"
                   value={formData.businessName}
-                  onChange={(e) => setFormData({...formData, businessName: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, businessName: e.target.value })}
                 />
               </div>
             </div>
@@ -328,7 +391,7 @@ const VendorRegistrationPage = () => {
               <select
                 className="select-input"
                 value={formData.businessType}
-                onChange={(e) => setFormData({...formData, businessType: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, businessType: e.target.value })}
               >
                 <option value="">Select Business Type</option>
                 <option value="Sole Proprietorship">Sole Proprietorship</option>
@@ -347,7 +410,7 @@ const VendorRegistrationPage = () => {
                   placeholder="Enter complete business address"
                   rows="2"
                   value={formData.address}
-                  onChange={(e) => setFormData({...formData, address: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                 />
               </div>
             </div>
@@ -357,7 +420,7 @@ const VendorRegistrationPage = () => {
               <select
                 className="select-input"
                 value={formData.city}
-                onChange={(e) => setFormData({...formData, city: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
               >
                 <option value="">Select City</option>
                 <option value="Mumbai">Mumbai</option>
@@ -393,7 +456,7 @@ const VendorRegistrationPage = () => {
                 placeholder="e.g., Mumbai, Pune, Thane"
                 className="text-input"
                 value={formData.operatingAreas}
-                onChange={(e) => setFormData({...formData, operatingAreas: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, operatingAreas: e.target.value })}
               />
               <small className="input-hint">Enter cities separated by commas</small>
             </div>
@@ -449,7 +512,7 @@ const VendorRegistrationPage = () => {
                     type={showPassword ? "text" : "password"}
                     placeholder="Min 6 characters"
                     value={formData.password}
-                    onChange={(e) => setFormData({...formData, password: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   />
                   <button type="button" className="password-toggle" onClick={() => setShowPassword(!showPassword)}>
                     {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
@@ -464,7 +527,7 @@ const VendorRegistrationPage = () => {
                   placeholder="Re-enter password"
                   className="text-input"
                   value={formData.confirmPassword}
-                  onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                 />
               </div>
             </div>
@@ -494,12 +557,12 @@ const VendorRegistrationPage = () => {
 
           <h1 className="verify-title">Verify Email</h1>
           <p className="verify-subtitle">
-            We've sent a 6-digit OTP to<br/>
+            We've sent a 6-digit OTP to<br />
             <strong>{formData.email}</strong>
           </p>
 
           <div className="progress-bar mb-20">
-            <div className="progress-fill" style={{width: '75%'}}></div>
+            <div className="progress-fill" style={{ width: '75%' }}></div>
           </div>
 
           {error && (
@@ -547,12 +610,12 @@ const VendorRegistrationPage = () => {
 
           <h1 className="verify-title">Verify Phone Number</h1>
           <p className="verify-subtitle">
-            We've sent a 6-digit OTP to<br/>
+            We've sent a 6-digit OTP to<br />
             <strong>{formData.phone}</strong>
           </p>
 
           <div className="progress-bar mb-20">
-            <div className="progress-fill" style={{width: '100%'}}></div>
+            <div className="progress-fill" style={{ width: '100%' }}></div>
           </div>
 
           {error && (
