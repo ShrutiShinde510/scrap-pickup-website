@@ -1,0 +1,142 @@
+.signup-container {
+  max-width: 1100px;
+}
+
+.signup-progress {
+  margin-top: 60px;
+}
+
+.progress-step {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.step-circle {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.2);
+  border: 3px solid rgba(255,255,255,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: bold;
+  transition: all 0.3s;
+}
+
+.step-circle.active {
+  background: white;
+  color: #059669;
+  border-color: white;
+}
+
+.step-info h4 {
+  font-size: 18px;
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+
+.step-info p {
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+.progress-line {
+  width: 3px;
+  height: 40px;
+  background: rgba(255,255,255,0.3);
+  margin-left: 23px;
+}
+
+.select-input {
+  width: 100%;
+  padding: 14px 15px;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 15px;
+  transition: all 0.3s;
+  background: white;
+}
+
+.select-input:focus {
+  border-color: #059669;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1);
+}
+
+.password-hint {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.terms-box {
+  background: #f9fafb;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.terms-box a {
+  color: #059669;
+  font-weight: 600;
+}
+
+.terms-box a:hover {
+  text-decoration: underline;
+}
+
+.btn-next {
+  width: 100%;
+  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+  color: white;
+  padding: 14px;
+  border-radius: 10px;
+  font-weight: bold;
+  font-size: 16px;
+  transition: all 0.3s;
+}
+
+.btn-next:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(5, 150, 105, 0.3);
+}
+
+.button-group {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 15px;
+}
+
+.btn-back {
+  background: #f3f4f6;
+  color: #374151;
+  padding: 14px 25px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 16px;
+  transition: all 0.3s;
+}
+
+.btn-back:hover {
+  background: #e5e7eb;
+  transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+  .button-group {
+    grid-template-columns: 1fr;
+  }
+
+  .btn-back {
+    order: 2;
+  }
+
+  .btn-submit {
+    order: 1;
+  }
+}

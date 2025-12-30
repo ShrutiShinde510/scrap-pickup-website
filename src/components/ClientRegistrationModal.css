@@ -1,32 +1,37 @@
+
+
+
+/* Overlay */
 .modal-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   background: rgba(0, 0, 0, 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 2000;
-  padding: 20px;
-  overflow-y: auto;
+  padding: 16px;
+  overflow: hidden; /* IMPORTANT */
 }
 
+/* Modal box */
 .modal-content {
   background: white;
   border-radius: 12px;
   width: 100%;
   max-width: 700px;
-  max-height: 90vh;
+  height: 90vh;                 /* IMPORTANT */
+  display: flex;                /* IMPORTANT */
+  flex-direction: column;       /* IMPORTANT */
   position: relative;
   animation: slideIn 0.3s ease-out;
 }
 
+/* Animation */
 @keyframes slideIn {
   from {
     opacity: 0;
-    transform: translateY(-50px);
+    transform: translateY(-40px);
   }
   to {
     opacity: 1;
@@ -34,21 +39,20 @@
   }
 }
 
+/* Header */
 .modal-header {
+  flex-shrink: 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 25px 30px;
+  padding: 22px 28px;
   border-bottom: 2px solid #e5e7eb;
-  position: sticky;
-  top: 0;
   background: white;
   border-radius: 12px 12px 0 0;
-  z-index: 10;
 }
 
 .modal-header h2 {
-  font-size: 26px;
+  font-size: 24px;
   font-weight: bold;
   color: #059669;
   margin: 0;
@@ -56,70 +60,78 @@
 
 .modal-close {
   background: none;
+  border: none;
+  cursor: pointer;
   color: #6b7280;
-  padding: 5px;
-  transition: color 0.3s;
 }
 
 .modal-close:hover {
   color: #1f2937;
 }
 
+/* Body (ONLY THIS SCROLLS) */
 .modal-body {
-  padding: 30px;
-  max-height: calc(90vh - 90px);
-  overflow-y: auto;
+  flex: 1;                      /* IMPORTANT */
+  overflow-y: auto;             /* IMPORTANT */
+  padding: 28px;
+  padding-bottom: 40px;         /* IMPORTANT */
 }
 
+/* Sections */
 .form-section {
-  margin-bottom: 35px;
+  margin-bottom: 32px;
 }
 
 .form-section-title {
   font-size: 20px;
   font-weight: bold;
   color: #374151;
-  margin-bottom: 20px;
+  margin-bottom: 18px;
 }
 
+/* Inputs */
 .form-group {
-  margin-bottom: 20px;
+  margin-bottom: 18px;
 }
 
 .form-group label {
   display: block;
   font-weight: 600;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   color: #374151;
 }
 
-.form-input, .form-textarea, .form-select {
+.form-input,
+.form-textarea,
+.form-select {
   width: 100%;
-  padding: 12px 15px;
+  padding: 12px 14px;
   border: 2px solid #e5e7eb;
   border-radius: 8px;
-  font-size: 16px;
-  transition: all 0.3s;
+  font-size: 15px;
 }
 
-.form-input:focus, .form-textarea:focus, .form-select:focus {
+.form-input:focus,
+.form-textarea:focus,
+.form-select:focus {
   border-color: #059669;
   outline: none;
   box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1);
 }
 
+/* Grid rows */
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 20px;
+  gap: 16px;
 }
 
+/* Upload boxes */
 .upload-box {
   border: 2px dashed #d1d5db;
   border-radius: 8px;
-  padding: 25px;
+  padding: 22px;
   text-align: center;
-  transition: all 0.3s;
   cursor: pointer;
 }
 
@@ -129,10 +141,10 @@
 }
 
 .upload-icon {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   color: #9ca3af;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .file-input {
@@ -143,66 +155,50 @@
   color: #2563eb;
   font-weight: 600;
   cursor: pointer;
-  display: block;
-}
-
-.upload-label:hover {
-  text-decoration: underline;
 }
 
 .file-name {
-  margin-top: 10px;
+  margin-top: 8px;
   color: #059669;
   font-size: 14px;
   font-weight: 600;
 }
 
+/* Terms */
 .terms-box {
   background: #f9fafb;
-  padding: 20px;
+  padding: 18px;
   border-radius: 8px;
-  margin-bottom: 25px;
+  margin-bottom: 22px;
 }
 
 .terms-label {
   display: flex;
-  align-items: start;
   gap: 10px;
-  cursor: pointer;
-}
-
-.terms-label input {
-  margin-top: 3px;
-  width: 18px;
-  height: 18px;
-  cursor: pointer;
-}
-
-.terms-label span {
   font-size: 14px;
-  color: #374151;
 }
 
+/* Buttons */
 .btn-register {
   width: 100%;
-  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+  background: linear-gradient(135deg, #059669, #10b981);
   color: white;
-  padding: 15px;
+  padding: 14px;
   border-radius: 8px;
+  font-size: 17px;
   font-weight: bold;
-  font-size: 18px;
-  transition: all 0.3s;
+  cursor: pointer;
 }
 
 .btn-register:hover {
-  transform: translateY(-2px);
   box-shadow: 0 8px 20px rgba(5, 150, 105, 0.3);
+  transform: translateY(-1px);
 }
 
+/* Login link */
 .login-link {
   text-align: center;
-  margin-top: 20px;
-  color: #6b7280;
+  margin-top: 18px;
   font-size: 14px;
 }
 
@@ -211,76 +207,42 @@
   font-weight: 600;
 }
 
-.login-link a:hover {
-  text-decoration: underline;
-}
-
-/* Success Modal */
+/* Success modal */
 .success-modal {
   max-width: 500px;
-  padding: 50px 40px;
-}
-
-.success-content {
+  padding: 40px;
   text-align: center;
 }
 
 .success-icon {
-  width: 100px;
-  height: 100px;
+  width: 90px;
+  height: 90px;
   background: #d1fae5;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 30px;
+  margin: 0 auto 20px;
   color: #059669;
 }
 
 .success-title {
-  font-size: 32px;
+  font-size: 28px;
   font-weight: bold;
   color: #059669;
-  margin-bottom: 15px;
-}
-
-.success-text {
-  color: #6b7280;
-  margin-bottom: 25px;
-  font-size: 16px;
 }
 
 .success-info {
   background: #ecfdf5;
-  padding: 20px;
+  padding: 18px;
   border-radius: 8px;
-  margin-bottom: 30px;
+  margin: 22px 0;
 }
 
-.success-info p {
-  margin: 10px 0;
-  color: #374151;
-  font-size: 14px;
-}
-
-.btn-success {
-  width: 100%;
-  background: #059669;
-  color: white;
-  padding: 15px;
-  border-radius: 8px;
-  font-weight: bold;
-  font-size: 18px;
-  transition: all 0.3s;
-}
-
-.btn-success:hover {
-  background: #047857;
-}
-
+/* Mobile */
 @media (max-width: 768px) {
   .modal-content {
-    margin: 20px 0;
+    height: 95vh;
   }
 
   .form-row {
@@ -288,11 +250,6 @@
   }
 
   .modal-header h2 {
-    font-size: 22px;
-  }
-
-  .success-title {
-    font-size: 26px;
+    font-size: 20px;
   }
 }
-

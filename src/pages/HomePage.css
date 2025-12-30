@@ -111,3 +111,79 @@
 }
 
 /* Materials Section */
+.materials-section {
+  padding: 80px 20px;
+}
+
+.materials-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 30px;
+  margin-top: 50px;
+}
+
+.materials-card {
+  padding: 40px;
+  border-radius: 12px;
+}
+
+.materials-card.accepted {
+  background: #ecfdf5;
+}
+
+.materials-card.rejected {
+  background: #fef2f2;
+}
+
+.materials-card h3 {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 25px;
+}
+
+.materials-card.accepted h3 {
+  color: #065f46;
+}
+.materials-card.rejected h3 {
+  color: #991b1b;
+}
+
+.materials-card ul {
+  list-style: none;
+}
+
+.materials-card li {
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.checkmark {
+  color: #059669;
+  font-weight: bold;
+}
+
+.crossmark {
+  color: #dc2626;
+  font-weight: bold;
+}
+
+@media (max-width: 768px) {
+  .section-title {
+    font-size: 28px;
+  }
+
+  .steps-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .materials-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .impact-number {
+    font-size:36px;
+}
+}
