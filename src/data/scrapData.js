@@ -1,9 +1,9 @@
 export const scrapCategories = [
-  { id: 1, name: 'Paper', price: '15-20', items: ['Newspaper', 'Cardboard', 'Office Paper', 'Books'] },
-  { id: 2, name: 'Plastic', price: '10-25', items: ['PET Bottles', 'HDPE', 'PVC', 'Plastic Bags'] },
-  { id: 3, name: 'Metal', price: '30-50', items: ['Iron', 'Steel', 'Aluminum', 'Copper'] },
-  { id: 4, name: 'E-Waste', price: '20-100', items: ['Mobile Phones', 'Laptops', 'Batteries', 'Cables'] },
-  { id: 5, name: 'Glass', price: '5-10', items: ['Bottles', 'Broken Glass', 'Mirrors'] }
+  { id: 1, name: 'Paper', price: '15-20', items: ['Newspaper', 'Cardboard', 'Office Paper', 'Books'], icon: '📰' },
+  { id: 2, name: 'Plastic', price: '10-25', items: ['PET Bottles', 'HDPE', 'PVC', 'Plastic Bags'],icon: '🧴' },
+  { id: 3, name: 'Metal', price: '30-50', items: ['Iron', 'Steel', 'Aluminum', 'Copper'] , icon: '🔩'},
+  { id: 4, name: 'E-Waste', price: '20-100', items: ['Mobile Phones', 'Laptops', 'Batteries', 'Cables'] ,icon: '💻'},
+  { id: 5, name: 'Glass', price: '5-10', items: ['Bottles', 'Broken Glass', 'Mirrors'] , icon: '🍾'}
 ];
 
 export const cities = ['Mumbai', 'Delhi', 'Bangalore', 'Pune', 'Hyderabad', 'Chennai', 'Kolkata'];

@@ -1,27 +1,72 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
-import HomePage from './pages/HomePage';
-import './App.css';
+import ProtectedRoute from './components/ProtectedRoute';
+import { useAuth } from './context/AuthContext';
 
+import HomePage from './pages/HomePage';
+import LoginPage from './pages/LoginPage';
+import SignupPage from './pages/SignupPage';
+import VerifyEmailPage from './pages/VerifyEmailPage';
+import BookPickupPage from './pages/BookPickupPage';
+import VendorRegistrationPage from './pages/VendorRegistrationPage';
+
+import './App.css';
+import ClientRegistrationModal from './components/ClientRegistrationModal';
 
 function App() {
+  const { isAuthenticated } = useAuth();
+
+  const hideLayout = ['/login', '/signup', '/verify-email'].includes(
+    window.location.pathname
+  );
+
   return (
-    <Router>
-      <div className="app-container">
-        <Navbar />
+    <div className="app-container">
+      {!hideLayout && <Navbar />}
 
-        <main className="main-content">
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            
-          </Routes>
-        </main>
+      <main className="main-content">
+        <Routes>
+          <Route path="/" element={<HomePage />} />
 
-        <Footer />
-      </div>
-    </Router>
+          <Route
+            path="/login"
+            element={isAuthenticated ? <Navigate to="/" /> : <LoginPage />}
+          />
+
+          <Route
+            path="/signup"
+            element={isAuthenticated ? <Navigate to="/" /> : <SignupPage />}
+          />
+
+          <Route path="/verify-email" element={<VerifyEmailPage />} />
+
+          <Route
+            path="/book-pickup"
+            element={
+              <ProtectedRoute requireVerification>
+                <BookPickupPage />
+              </ProtectedRoute>
+            }
+          />
+
+           <Route
+            path="/client-registration"
+            element={<ClientRegistrationModal />}
+          />
+
+          <Route
+            path="/vendor-registration"
+            element={<VendorRegistrationPage />}
+          />
+
+          <Route path="*" element={<Navigate to="/" />} />
+        </Routes>
+      </main>
+
+      {!hideLayout && <Footer />}
+    </div>
   );
 }
 
