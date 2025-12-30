@@ -1,14 +1,15 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Upload, User, Mail, Phone, Building, MapPin, Eye, EyeOff, CheckCircle, Clock } from 'lucide-react';
+import { Upload, User, Mail, Phone, Building, MapPin, Eye, EyeOff, CheckCircle } from 'lucide-react';
 import { scrapCategories } from '../data/scrapData';
 import api from '../api/axios';
 import './VendorRegistrationPage.css';
 
 const VendorRegistrationPage = () => {
   const navigate = useNavigate();
-  const [currentStep, setCurrentStep] = useState(1); // 1: Basic Info, 2: Business Details, 3: Email OTP, 4: Phone OTP, 5: Success
+  const [currentStep, setCurrentStep] = useState(1);
+
 
   const [formData, setFormData] = useState({
     // Personal Info
@@ -21,8 +22,8 @@ const VendorRegistrationPage = () => {
     businessType: '',
     address: '',
     city: '',
-    scrapCategories: [],
     operatingAreas: '',
+
 
     // Documents
     businessLicense: null,
@@ -37,13 +38,13 @@ const VendorRegistrationPage = () => {
 
   const [emailOTP, setEmailOTP] = useState(['', '', '', '', '', '']);
   const [phoneOTP, setPhoneOTP] = useState(['', '', '', '', '', '']);
-  // const [generatedEmailOTP, setGeneratedEmailOTP] = useState(''); // Served by backend
-  // const [generatedPhoneOTP, setGeneratedPhoneOTP] = useState(''); // Served by backend
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // Step 1: Basic Information
+  // ============================================
+  // STEP 1: Basic Information Validation
+  // ============================================
   const validateStep1 = () => {
     if (!formData.contactPerson || !formData.email || !formData.phone) {
       setError('Please fill all required fields');
@@ -65,10 +66,12 @@ const VendorRegistrationPage = () => {
     return true;
   };
 
-  // Step 2: Business Details
-  const validateStep2 = () => {
+  // ============================================
+  // STEP 3: Business Details Validation
+  // ============================================
+  const validateStep3 = () => {
     if (!formData.businessName || !formData.businessType || !formData.address ||
-      !formData.city || formData.scrapCategories.length === 0 || !formData.operatingAreas ||
+      !formData.city || !formData.operatingAreas ||
       !formData.password || !formData.confirmPassword) {
       setError('Please fill all required fields');
       return false;
@@ -93,6 +96,9 @@ const VendorRegistrationPage = () => {
     return true;
   };
 
+  // ============================================
+  // STEP 1 → STEP 2: Send Email OTP
+  // ============================================
   const handleStep1Next = async () => {
     setError('');
     if (validateStep1()) {
@@ -103,7 +109,6 @@ const VendorRegistrationPage = () => {
           channel: 'email'
         });
 
-        // In dev mode, we might want to log the mock OTP if returned
         if (response.data.mock_otp) {
           console.log('EMAIL OTP:', response.data.mock_otp);
           alert(`Email OTP sent to ${formData.email}\n\nDEMO OTP: ${response.data.mock_otp}`);
@@ -111,7 +116,7 @@ const VendorRegistrationPage = () => {
           alert(`Email OTP sent to ${formData.email}`);
         }
 
-        setCurrentStep(2);
+        setCurrentStep(2); // Go to Email OTP verification
       } catch (err) {
         console.error("OTP Error:", err);
         setError(err.response?.data?.error || 'Failed to send OTP. Please try again.');
@@ -121,13 +126,9 @@ const VendorRegistrationPage = () => {
     }
   };
 
-  const handleStep2Next = () => {
-    setError('');
-    if (validateStep2()) {
-      setCurrentStep(3);
-    }
-  };
-
+  // ============================================
+  // STEP 2 → STEP 3: Verify Email OTP
+  // ============================================
   const handleEmailOTPVerify = async () => {
     const enteredOTP = emailOTP.join('');
 
@@ -137,7 +138,6 @@ const VendorRegistrationPage = () => {
     }
 
     setIsLoading(true);
-
     try {
       await api.post('/otp/verify/', {
         contact: formData.email,
@@ -145,30 +145,51 @@ const VendorRegistrationPage = () => {
       });
 
       setError('');
+      alert('✅ Email verified successfully!');
+      setCurrentStep(3); // Go to Business Details
 
-      // Success! Now send Phone OTP
-      const response = await api.post('/otp/send/', {
-        contact: formData.phone,
-        channel: 'sms'
-      });
-
-      if (response.data.mock_otp) {
-        console.log('PHONE OTP:', response.data.mock_otp);
-        alert(`Phone OTP sent to ${formData.phone}\n\nDEMO OTP: ${response.data.mock_otp}`);
-      } else {
-        alert(`Phone OTP sent to ${formData.phone}`);
-      }
-
-      setCurrentStep(4);
     } catch (err) {
-      console.error("OTP Verification Error:", err);
+      console.error("OTP Error:", err);
       setError(err.response?.data?.error || 'Invalid OTP. Please try again.');
-      setEmailOTP(['', '', '', '', '', '']); // Clear input
+      setEmailOTP(['', '', '', '', '', '']);
     } finally {
       setIsLoading(false);
     }
   };
 
+  // ============================================
+  // STEP 3 → STEP 4: Business Details → Send Phone OTP
+  // ============================================
+  const handleStep3Next = async () => {
+    setError('');
+    if (validateStep3()) {
+      setIsLoading(true);
+      try {
+        const response = await api.post('/otp/send/', {
+          contact: formData.phone,
+          channel: 'sms'
+        });
+
+        if (response.data.mock_otp) {
+          console.log('PHONE OTP:', response.data.mock_otp);
+          alert(`Phone OTP sent to ${formData.phone}\n\nDEMO OTP: ${response.data.mock_otp}`);
+        } else {
+          alert(`Phone OTP sent to ${formData.phone}`);
+        }
+
+        setCurrentStep(4); // Go to Phone OTP verification
+      } catch (err) {
+        console.error("OTP Error:", err);
+        setError(err.response?.data?.error || 'Failed to send OTP. Please try again.');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  };
+
+  // ============================================
+  // STEP 4 → STEP 5: Verify Phone OTP → Complete
+  // ============================================
   const handlePhoneOTPVerify = async () => {
     const enteredOTP = phoneOTP.join('');
 
@@ -187,7 +208,6 @@ const VendorRegistrationPage = () => {
       });
 
       // 2. Submit Registration
-      // ... proceeding to submit ...
       try {
         const formDataToSend = new FormData();
         formDataToSend.append('email', formData.email);
@@ -202,8 +222,7 @@ const VendorRegistrationPage = () => {
         formDataToSend.append('business_type', formData.businessType);
         formDataToSend.append('operating_areas', formData.operatingAreas);
 
-        // Scrape Types (as array list for backend)
-        formData.scrapCategories.forEach(cat => formDataToSend.append('scrape_types', cat));
+
 
         // Documents
         if (formData.businessLicense) formDataToSend.append('business_license', formData.businessLicense);
@@ -218,7 +237,7 @@ const VendorRegistrationPage = () => {
         });
 
         setError('');
-        setCurrentStep(5);
+        setCurrentStep(5); // Go to Success
       } catch (err) {
         console.error("Registration error:", err);
         if (err.response && err.response.data) {
@@ -237,6 +256,9 @@ const VendorRegistrationPage = () => {
     }
   };
 
+  // ============================================
+  // OTP Input Handlers
+  // ============================================
   const handleOTPChange = (index, value, type) => {
     if (value.length > 1) value = value[0];
     if (!/^\d*$/.test(value)) return;
@@ -265,12 +287,10 @@ const VendorRegistrationPage = () => {
     }
   };
 
-  const handleCategoryToggle = (category) => {
-    const updated = formData.scrapCategories.includes(category)
-      ? formData.scrapCategories.filter(c => c !== category)
-      : [...formData.scrapCategories, category];
-    setFormData({ ...formData, scrapCategories: updated });
-  };
+  // ============================================
+  // Other Handlers
+  // ============================================
+
 
   const handleFileUpload = (e, field) => {
     const file = e.target.files[0];
@@ -283,16 +303,18 @@ const VendorRegistrationPage = () => {
     }
   };
 
-  // Step 1: Basic Information
+  // ============================================
+  // STEP 1: Basic Contact Information
+  // ============================================
   if (currentStep === 1) {
     return (
       <div className="vendor-page">
         <div className="vendor-container">
           <div className="vendor-header">
             <h1 className="vendor-title">Vendor Registration</h1>
-            <p className="vendor-subtitle">Step 1 of 4: Basic Information</p>
+            <p className="vendor-subtitle">Step 1 of 5: Basic Information</p>
             <div className="progress-bar">
-              <div className="progress-fill" style={{ width: '25%' }}></div>
+              <div className="progress-fill" style={{ width: '20%' }}></div>
             </div>
           </div>
 
@@ -344,8 +366,8 @@ const VendorRegistrationPage = () => {
               <small className="input-hint">We'll send OTP to verify this number</small>
             </div>
 
-            <button onClick={handleStep1Next} className="btn-next">
-              Next: Business Details →
+            <button onClick={handleStep1Next} className="btn-next" disabled={isLoading}>
+              {isLoading ? 'Sending...' : 'Next: Verify Email →'}
             </button>
           </div>
         </div>
@@ -353,16 +375,78 @@ const VendorRegistrationPage = () => {
     );
   }
 
-  // Step 2: Business Details
+  // ============================================
+  // STEP 2: Email OTP Verification
+  // ============================================
   if (currentStep === 2) {
+    return (
+      <div className="verify-page">
+        <div className="verify-container">
+          <div className="verify-icon-wrapper">
+            <Mail size={60} className="verify-icon" />
+          </div>
+
+          <h1 className="verify-title">Verify Email</h1>
+          <p className="verify-subtitle">
+            We've sent a 6-digit OTP to<br />
+            <strong>{formData.email}</strong>
+          </p>
+
+          <div className="progress-bar mb-20">
+            <div className="progress-fill" style={{ width: '40%' }}></div>
+          </div>
+
+          {error && (
+            <div className="error-message">
+              <span>⚠️</span> {error}
+            </div>
+          )}
+
+          <div className="code-input-group">
+            {emailOTP.map((digit, index) => (
+              <input
+                key={index}
+                id={`email-otp-${index}`}
+                type="text"
+                maxLength="1"
+                value={digit}
+                onChange={(e) => handleOTPChange(index, e.target.value, 'email')}
+                onKeyDown={(e) => handleOTPKeyDown(index, e, 'email')}
+                className="code-input"
+                disabled={isLoading}
+              />
+            ))}
+          </div>
+
+          <button onClick={handleEmailOTPVerify} className="btn-verify" disabled={isLoading}>
+            {isLoading ? 'Verifying...' : (
+              <>
+                <CheckCircle size={20} />
+                Verify Email
+              </>
+            )}
+          </button>
+
+          <button onClick={() => setCurrentStep(1)} className="btn-back-link">
+            ← Back to Basic Info
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ============================================
+  // STEP 3: Business Details
+  // ============================================
+  if (currentStep === 3) {
     return (
       <div className="vendor-page">
         <div className="vendor-container large">
           <div className="vendor-header">
             <h1 className="vendor-title">Business Information</h1>
-            <p className="vendor-subtitle">Step 2 of 4: Business Details</p>
+            <p className="vendor-subtitle">Step 3 of 5: Business Details</p>
             <div className="progress-bar">
-              <div className="progress-fill" style={{ width: '50%' }}></div>
+              <div className="progress-fill" style={{ width: '60%' }}></div>
             </div>
           </div>
 
@@ -433,21 +517,6 @@ const VendorRegistrationPage = () => {
               </select>
             </div>
 
-            <div className="input-group">
-              <label>Scrap Categories You Handle * (Select at least one)</label>
-              <div className="checkbox-grid">
-                {scrapCategories.map(cat => (
-                  <label key={cat.id} className={`checkbox-card ${formData.scrapCategories.includes(cat.name) ? 'selected' : ''}`}>
-                    <input
-                      type="checkbox"
-                      checked={formData.scrapCategories.includes(cat.name)}
-                      onChange={() => handleCategoryToggle(cat.name)}
-                    />
-                    <span>{cat.name}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
 
             <div className="input-group">
               <label>Operating Areas *</label>
@@ -533,11 +602,11 @@ const VendorRegistrationPage = () => {
             </div>
 
             <div className="button-group">
-              <button onClick={() => setCurrentStep(1)} className="btn-back">
+              <button onClick={() => setCurrentStep(2)} className="btn-back" disabled={isLoading}>
                 ← Back
               </button>
-              <button onClick={handleStep2Next} className="btn-next">
-                Next: Verify Email →
+              <button onClick={handleStep3Next} className="btn-next" disabled={isLoading}>
+                {isLoading ? 'Sending...' : 'Next: Verify Phone →'}
               </button>
             </div>
           </div>
@@ -546,60 +615,9 @@ const VendorRegistrationPage = () => {
     );
   }
 
-  // Step 3: Email OTP Verification
-  if (currentStep === 3) {
-    return (
-      <div className="verify-page">
-        <div className="verify-container">
-          <div className="verify-icon-wrapper">
-            <Mail size={60} className="verify-icon" />
-          </div>
-
-          <h1 className="verify-title">Verify Email</h1>
-          <p className="verify-subtitle">
-            We've sent a 6-digit OTP to<br />
-            <strong>{formData.email}</strong>
-          </p>
-
-          <div className="progress-bar mb-20">
-            <div className="progress-fill" style={{ width: '75%' }}></div>
-          </div>
-
-          {error && (
-            <div className="error-message">
-              <span>⚠️</span> {error}
-            </div>
-          )}
-
-          <div className="code-input-group">
-            {emailOTP.map((digit, index) => (
-              <input
-                key={index}
-                id={`email-otp-${index}`}
-                type="text"
-                maxLength="1"
-                value={digit}
-                onChange={(e) => handleOTPChange(index, e.target.value, 'email')}
-                onKeyDown={(e) => handleOTPKeyDown(index, e, 'email')}
-                className="code-input"
-              />
-            ))}
-          </div>
-
-          <button onClick={handleEmailOTPVerify} className="btn-verify">
-            <CheckCircle size={20} />
-            Verify Email
-          </button>
-
-          <button onClick={() => setCurrentStep(2)} className="btn-back-link">
-            ← Back to Business Details
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // Step 4: Phone OTP Verification
+  // ============================================
+  // STEP 4: Phone OTP Verification
+  // ============================================
   if (currentStep === 4) {
     return (
       <div className="verify-page">
@@ -615,7 +633,7 @@ const VendorRegistrationPage = () => {
           </p>
 
           <div className="progress-bar mb-20">
-            <div className="progress-fill" style={{ width: '100%' }}></div>
+            <div className="progress-fill" style={{ width: '80%' }}></div>
           </div>
 
           {error && (
@@ -643,22 +661,28 @@ const VendorRegistrationPage = () => {
           <button onClick={handlePhoneOTPVerify} className="btn-verify" disabled={isLoading}>
             {isLoading ? (
               <>
-                <div className="spinner-small"></div>
+                <CheckCircle size={20} className="spin" />
                 Verifying...
               </>
             ) : (
               <>
                 <CheckCircle size={20} />
-                Complete Registration
+                Verify Phone & Register
               </>
             )}
+          </button>
+
+          <button onClick={() => setCurrentStep(3)} className="btn-back-link" disabled={isLoading}>
+            ← Back to Business Details
           </button>
         </div>
       </div>
     );
   }
 
-  // Step 5: Success
+  // ============================================
+  // STEP 5: Success
+  // ============================================
   if (currentStep === 5) {
     return (
       <div className="verify-page">
@@ -677,6 +701,7 @@ const VendorRegistrationPage = () => {
             <ul>
               <li>✓ Email Verified</li>
               <li>✓ Phone Verified</li>
+              <li>✓ Documents Uploaded</li>
               <li>⏳ Pending Admin Approval</li>
             </ul>
             <p className="info-text">

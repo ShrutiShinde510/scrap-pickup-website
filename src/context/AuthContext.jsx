@@ -43,7 +43,12 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (type, data) => {
     try {
-      const res = await api.post(`register/${type}/`, data);
+      const config = {};
+      if (data instanceof FormData) {
+        config.headers = { "Content-Type": "multipart/form-data" };
+      }
+
+      const res = await api.post(`register/${type}/`, data, config);
 
       const { access, refresh, user } = res.data;
 

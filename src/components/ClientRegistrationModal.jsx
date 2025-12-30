@@ -45,17 +45,21 @@ const ClientRegistrationModal = ({ onClose }) => {
 
     setLoading(true);
 
-    const payload = {
-      email: formData.email,
-      password: formData.password,
-      full_name: formData.fullName,
-      phone_number: formData.phone,
-      address: formData.address,
-      city: formData.city,
-      // Skipping file uploads for now
-    };
+    const formDataToSend = new FormData();
+    formDataToSend.append("email", formData.email);
+    formDataToSend.append("password", formData.password);
+    formDataToSend.append("full_name", formData.fullName);
+    formDataToSend.append("phone_number", formData.phone);
+    formDataToSend.append("address", formData.address);
+    formDataToSend.append("city", formData.city);
 
-    const result = await register("client", payload);
+    if (formData.idProof) {
+      formDataToSend.append("id_proof", formData.idProof);
+    }
+    // Profile image logic if needed later
+    // if (formData.profileImage) formDataToSend.append("profile_image", formData.profileImage);
+
+    const result = await register("client", formDataToSend);
 
     setLoading(false);
 
@@ -229,16 +233,7 @@ const ClientRegistrationModal = ({ onClose }) => {
           {/* Documents - Visual Only for now */}
           <div className="form-section">
             <h3 className="form-section-title">Documents (Optional)</h3>
-            <p
-              style={{
-                fontSize: "0.8rem",
-                color: "#666",
-                marginBottom: "10px",
-              }}
-            >
-              * Note: Document upload is currently disabled during system
-              maintenance.
-            </p>
+
             <div className="form-row">
               <div className="form-group">
                 <label>ID Proof</label>

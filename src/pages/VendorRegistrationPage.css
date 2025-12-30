@@ -170,7 +170,7 @@
   color: #059669;
 }
 
-.checkbox-grid {
+/*.checkbox-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: 12px;
@@ -201,6 +201,7 @@
 .checkbox-card:hover {
   background: #f9fafb;
 }
+*/
 
 .input-row {
   display: grid;
