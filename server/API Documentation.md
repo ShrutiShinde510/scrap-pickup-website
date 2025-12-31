@@ -88,8 +88,12 @@ curl -X POST http://127.0.0.1:8000/api/register/seller/ \
 -F "business_type=Recycler" \
 -F "scrape_types=PAPER" \
 -F "scrape_types=PLASTIC" \
+
+-F "vendor_id_proof=@/path/to/id_proof.jpg" \
 -F "business_license=@/path/to/license.pdf"
 ```
+
+> **Dual Role Support**: If you register with an email that already exists (e.g., a Client registering as a Seller), providing the **correct existing password** will link the new role to the existing account instead of creating a new user.
 
 ### 3. Login
 **Endpoint**: `POST /login/`
