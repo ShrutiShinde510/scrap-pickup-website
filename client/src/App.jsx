@@ -11,6 +11,7 @@ import SignupPage from './pages/SignupPage';
 import VerifyEmailPage from './pages/VerifyEmailPage';
 import BookPickupPage from './pages/BookPickupPage';
 import VendorRegistrationPage from './pages/VendorRegistrationPage';
+import OTPPage from './pages/OTPPage';
 
 import './App.css';
 import ClientRegistrationModal from './components/ClientRegistrationModal';
@@ -51,7 +52,7 @@ function App() {
             }
           />
 
-           <Route
+          <Route
             path="/client-registration"
             element={<ClientRegistrationModal />}
           />
@@ -60,6 +61,8 @@ function App() {
             path="/vendor-registration"
             element={<VendorRegistrationPage />}
           />
+
+          <Route path="/otp" element={<OTPPage />} />
 
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>

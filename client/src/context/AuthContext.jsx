@@ -43,10 +43,11 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (type, data) => {
     try {
-      const config = {};
-      if (data instanceof FormData) {
-        config.headers = { "Content-Type": "multipart/form-data" };
-      }
+      // Explicitly unset Content-Type for FormData so browser sets the boundary.
+      // This overrides any global/instance defaults that might be set to application/json.
+      const config = data instanceof FormData
+        ? { headers: { "Content-Type": undefined } }
+        : {};
 
       const res = await api.post(`register/${type}/`, data, config);
 
