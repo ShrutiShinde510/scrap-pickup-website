@@ -1,30 +1,50 @@
+
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Mail, Lock, User, Phone, MapPin, UserPlus, Upload } from 'lucide-react';
+import {
+  Eye,
+  EyeOff,
+  Mail,
+  Lock,
+  User,
+  Phone,
+  MapPin,
+  UserPlus,
+  Upload  
+} from 'lucide-react';
 import api from '../api/axios';
 import './SignupPage.css';
 
 const SignupPage = () => {
   const navigate = useNavigate();
-  const [step, setStep] = useState(1); // 1: Personal Info, 2: Account Security
+  const [step, setStep] = useState(1);
+  const [otp, setOtp] = useState('');
+
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
     phone: '',
     address: '',
     city: '',
+    document: null,  
     password: '',
     confirmPassword: '',
     agreeTerms: false
   });
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const validateStep1 = () => {
-    if (!formData.fullName || !formData.email || !formData.phone ||
-      !formData.address || !formData.city) {
+    if (
+      !formData.fullName ||
+      !formData.email ||
+      !formData.phone ||
+      !formData.address ||
+      !formData.city
+    ) {
       setError('Please fill all required fields');
       return false;
     }
@@ -90,7 +110,7 @@ const SignupPage = () => {
         full_name: formData.fullName,
         phone_number: formData.phone,
         address: formData.address,
-        city: formData.city,
+        city: formData.city
       };
 
       await api.post('/register/client/', payload);
@@ -99,7 +119,6 @@ const SignupPage = () => {
       navigate('/login');
     } catch (err) {
       if (err.response && err.response.data) {
-        // Handle generic errors or field specific errors
         const errorMsg = Object.values(err.response.data).flat().join(', ');
         setError(errorMsg || 'Registration failed. Please try again.');
       } else {
@@ -118,16 +137,21 @@ const SignupPage = () => {
             <h1>EcoScrap</h1>
             <p className="tagline">Join the Green Revolution</p>
           </div>
+
           <div className="signup-progress">
             <div className="progress-step">
+           
               <div className={`step-circle ${step >= 1 ? 'active' : ''}`}>1</div>
               <div className="step-info">
                 <h4>Personal Info</h4>
                 <p>Basic details</p>
               </div>
             </div>
+
             <div className="progress-line"></div>
+
             <div className="progress-step">
+           
               <div className={`step-circle ${step >= 2 ? 'active' : ''}`}>2</div>
               <div className="step-info">
                 <h4>Account Security</h4>
@@ -160,9 +184,10 @@ const SignupPage = () => {
                       <User size={20} className="input-icon" />
                       <input
                         type="text"
-                        placeholder="Enter your full name"
                         value={formData.fullName}
-                        onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, fullName: e.target.value })
+                        }
                       />
                     </div>
                   </div>
@@ -173,9 +198,10 @@ const SignupPage = () => {
                       <Mail size={20} className="input-icon" />
                       <input
                         type="email"
-                        placeholder="Enter your email"
                         value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, email: e.target.value })
+                        }
                       />
                     </div>
                   </div>
@@ -186,9 +212,10 @@ const SignupPage = () => {
                       <Phone size={20} className="input-icon" />
                       <input
                         type="tel"
-                        placeholder="+91 1234567890"
                         value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, phone: e.target.value })
+                        }
                       />
                     </div>
                   </div>
@@ -199,9 +226,10 @@ const SignupPage = () => {
                       <MapPin size={20} className="input-icon" />
                       <input
                         type="text"
-                        placeholder="Enter your address"
                         value={formData.address}
-                        onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, address: e.target.value })
+                        }
                       />
                     </div>
                   </div>
@@ -211,16 +239,18 @@ const SignupPage = () => {
                     <select
                       className="select-input"
                       value={formData.city}
-                      onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, city: e.target.value })
+                      }
                     >
                       <option value="">Select City</option>
-                      <option value="Mumbai">Mumbai</option>
-                      <option value="Delhi">Delhi</option>
-                      <option value="Bangalore">Bangalore</option>
-                      <option value="Pune">Pune</option>
-                      <option value="Hyderabad">Hyderabad</option>
-                      <option value="Chennai">Chennai</option>
-                      <option value="Kolkata">Kolkata</option>
+                      <option>Mumbai</option>
+                      <option>Delhi</option>
+                      <option>Bangalore</option>
+                      <option>Pune</option>
+                      <option>Hyderabad</option>
+                      <option>Chennai</option>
+                      <option>Kolkata</option>
                     </select>
                   </div>
 
@@ -230,16 +260,47 @@ const SignupPage = () => {
                 </>
               ) : (
                 <>
+
+              
+<div className="input-group">
+  <label>Upload Verification Document *</label>
+
+  <div className="document-upload-box">
+    <input
+      type="file"
+      accept=".jpg,.jpeg,.png,.pdf"
+      onChange={(e) =>
+        setFormData({ ...formData, document: e.target.files[0] })
+      }
+    />
+
+    <div className="document-upload-content">
+      <Upload size={26} />
+      <p>
+        Upload <b>Aadhaar Card</b> or <b>PAN Card</b>
+      </p>
+     
+      {formData.document ? (
+        <span className="file-name">
+          📄 {formData.document.name}
+        </span>
+      ) : (
+        <span>PDF / JPG / PNG (Max 2MB)</span>
+      )}
+    </div>
+  </div>
+</div>
+
                   <div className="input-group">
                     <label>Create Password *</label>
                     <div className="input-wrapper">
                       <Lock size={20} className="input-icon" />
                       <input
-                        type={showPassword ? "text" : "password"}
-                        placeholder="Min 6 characters"
+                        type={showPassword ? 'text' : 'password'}
                         value={formData.password}
-                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                        disabled={isLoading}
+                        onChange={(e) =>
+                          setFormData({ ...formData, password: e.target.value })
+                        }
                       />
                       <button
                         type="button"
@@ -249,7 +310,6 @@ const SignupPage = () => {
                         {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                       </button>
                     </div>
-                    <small className="password-hint">Use 6+ characters with letters and numbers</small>
                   </div>
 
                   <div className="input-group">
@@ -257,18 +317,27 @@ const SignupPage = () => {
                     <div className="input-wrapper">
                       <Lock size={20} className="input-icon" />
                       <input
-                        type={showConfirmPassword ? "text" : "password"}
-                        placeholder="Re-enter password"
+                        type={showConfirmPassword ? 'text' : 'password'}
                         value={formData.confirmPassword}
-                        onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                        disabled={isLoading}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            confirmPassword: e.target.value
+                          })
+                        }
                       />
                       <button
                         type="button"
                         className="toggle-password"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        onClick={() =>
+                          setShowConfirmPassword(!showConfirmPassword)
+                        }
                       >
-                        {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                        {showConfirmPassword ? (
+                          <EyeOff size={20} />
+                        ) : (
+                          <Eye size={20} />
+                        )}
                       </button>
                     </div>
                   </div>
@@ -278,9 +347,14 @@ const SignupPage = () => {
                       <input
                         type="checkbox"
                         checked={formData.agreeTerms}
-                        onChange={(e) => setFormData({ ...formData, agreeTerms: e.target.checked })}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            agreeTerms: e.target.checked
+                          })
+                        }
                       />
-                      <span>I agree to the <a href="#">Terms & Conditions</a> and <a href="#">Privacy Policy</a></span>
+                      <span>I agree to Terms & Conditions</span>
                     </label>
                   </div>
 
@@ -288,18 +362,8 @@ const SignupPage = () => {
                     <button type="button" className="btn-back" onClick={() => setStep(1)}>
                       ← Back
                     </button>
-                    <button type="submit" className="btn-submit" disabled={isLoading}>
-                      {isLoading ? (
-                        <>
-                          <div className="spinner-small"></div>
-                          Creating...
-                        </>
-                      ) : (
-                        <>
-                          <UserPlus size={20} />
-                          Create Account
-                        </>
-                      )}
+                    <button type="submit" className="btn-submit">
+                      Create Account
                     </button>
                   </div>
                 </>
@@ -318,3 +382,9 @@ const SignupPage = () => {
 };
 
 export default SignupPage;
+
+
+
+
+
+

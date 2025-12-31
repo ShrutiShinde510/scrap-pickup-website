@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Upload, User, Mail, Phone, Building, MapPin, Eye, EyeOff, CheckCircle } from 'lucide-react';
 import { scrapCategories } from '../data/scrapData';
-import api from '../api/axios';
+import api from '../api/axios.ts';
 import './VendorRegistrationPage.css';
 
 const VendorRegistrationPage = () => {

@@ -11,6 +11,7 @@ const LoginPage = () => {
     email: '',
     password: ''
   });
+  
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
@@ -20,18 +21,19 @@ const LoginPage = () => {
     e.preventDefault();
     setError('');
 
-    if (!formData.email || !formData.password) {
+    if (!formData.email ||!formData.password) {
       setError('Please fill all fields');
       return;
     }
 
     setIsLoading(true);
+    
 
     // Simulate API call
     setTimeout(() => {
       // Check if user exists in localStorage (from signup)
       const users = JSON.parse(localStorage.getItem('users') || '[]');
-      const user = users.find(u => u.email === formData.email && u.password === formData.password);
+      const user = users.find(u => u.email === formData.email && u.password === formData.password  );
 
       if (user) {
         if (!user.isVerified) {
@@ -118,6 +120,11 @@ const LoginPage = () => {
                 </div>
               </div>
 
+
+              
+             
+
+
               <div className="input-group">
                 <label>Password</label>
                 <div className="input-wrapper">
@@ -192,5 +199,5 @@ const LoginPage = () => {
     </div>
   );
 };
-
-export default LoginPage;
+ 
+export default LoginPage;  

@@ -377,3 +377,9 @@
     padding: 12px 40px;
   }
 }
+
+.file-name {
+  margin-top: 5px;
+  font-size: 13px;
+  color: #374151;
+}
