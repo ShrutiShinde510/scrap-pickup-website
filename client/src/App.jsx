@@ -54,7 +54,7 @@ function App() {
 
           <Route
             path="/client-registration"
-            element={<ClientRegistrationModal />}
+            element={<Navigate to="/signup" />}
           />
 
           <Route
