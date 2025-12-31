@@ -27,7 +27,10 @@ class User(AbstractUser):
     business_license = models.FileField(upload_to="vendor_docs/license/", blank=True, null=True)
     gst_certificate = models.FileField(upload_to="vendor_docs/gst/", blank=True, null=True)
     address_proof = models.FileField(upload_to="vendor_docs/address/", blank=True, null=True)
-    id_proof = models.FileField(upload_to="vendor_docs/id/", blank=True, null=True)
+
+    # id_proof is for Clients now (or shared if legacy data exists). Sellers use vendor_id_proof.
+    id_proof = models.FileField(upload_to="client_docs/id/", blank=True, null=True) 
+    vendor_id_proof = models.FileField(upload_to="vendor_docs/id/", blank=True, null=True)
 
     # Verification Flags
     is_verified = models.BooleanField(default=False)

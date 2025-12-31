@@ -228,7 +228,7 @@ const VendorRegistrationPage = () => {
         if (formData.businessLicense) formDataToSend.append('business_license', formData.businessLicense);
         if (formData.gstCertificate) formDataToSend.append('gst_certificate', formData.gstCertificate);
         if (formData.addressProof) formDataToSend.append('address_proof', formData.addressProof);
-        if (formData.idProof) formDataToSend.append('id_proof', formData.idProof);
+        if (formData.idProof) formDataToSend.append('vendor_id_proof', formData.idProof);
 
         await api.post('/register/seller/', formDataToSend, {
           headers: {
