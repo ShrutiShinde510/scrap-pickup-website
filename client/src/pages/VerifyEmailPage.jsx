@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate ,useLocation } from 'react-router-dom';
 import { Mail, CheckCircle, ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import './VerifyEmailPage.css';
 
 const VerifyEmailPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [verificationCode, setVerificationCode] = useState(['', '', '', '', '', '']);
@@ -13,6 +14,8 @@ const VerifyEmailPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [resendTimer, setResendTimer] = useState(60);
   const [canResend, setCanResend] = useState(false);
+
+  const redirectTo = location.state?.redirectTo || '/';
 
   useEffect(() => {
     const pendingEmail = localStorage.getItem('pendingVerification');
@@ -89,7 +92,7 @@ const VerifyEmailPage = () => {
 
         login(userData);
         alert('Email verified successfully! Welcome to EcoScrap.');
-        navigate('/');
+        navigate(redirectTo, { replace: true });
       } else {
         setError('Invalid verification code. Please try again.');
         setVerificationCode(['', '', '', '', '', '']);

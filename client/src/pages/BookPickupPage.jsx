@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState , useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Upload, MapPin, Calendar, Clock, Package, DollarSign, CheckCircle } from 'lucide-react';
 import { scrapCategories, cities, timeSlots } from '../data/scrapData';
@@ -26,6 +26,14 @@ const BookPickupPage = () => {
   const [estimatedPrice, setEstimatedPrice] = useState(null);
   const [bookingId, setBookingId] = useState(null);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+  if (!user) {
+    navigate('/login', {
+      state: { redirectTo: '/book-pickup' }
+    });
+  }
+}, [user, navigate]);
 
   const calculatePrice = () => {
     if (formData.scrapType && formData.quantity) {
