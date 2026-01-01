@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate,useLocation   } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock, LogIn } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import './LoginPage.css';
@@ -8,7 +8,7 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { login } = useAuth();
-  
+
 
   const [formData, setFormData] = useState({
     email: '',
@@ -29,14 +29,32 @@ const LoginPage = () => {
       return;
     }
 
+    setIsLoading(true);
+    console.log("LoginPage: Attempting login for", formData.email);
+    const res = await login(formData.email, formData.password);
+    console.log("LoginPage: Login response", res);
+    setIsLoading(false);
 
-    navigate('/otp', {
-      state: {
-        email: formData.email,
-        password: formData.password,
-        redirectTo: location.state?.redirectTo || '/book-pickup'
+    if (res.success) {
+      console.log("LoginPage: Login success, redirecting...");
+
+      if (!res.user.is_phone_verified) {
+        console.log("LoginPage: User not verified, redirecting to /verify-email");
+        navigate('/verify-email');
+        return;
       }
-    });
+
+      // Determine redirection
+      // If user is verified, go to redirectTo or Home
+      // If not, they might be redirected by ProtectedRoute later, or we can force it here.
+      // For now, go to the intended page.
+      const destination = location.state?.redirectTo || '/';
+      console.log("LoginPage: Destination:", destination);
+      navigate(destination, { replace: true });
+    } else {
+      console.error("LoginPage: Login failed", res.error);
+      setError(res.error || 'Login failed');
+    }
   };
 
   const handleGoogleLogin = () => {
