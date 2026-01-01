@@ -9,7 +9,7 @@ ENV PYTHONUNBUFFERED=1
 WORKDIR /app
 
 # Install system dependencies (needed for some python packages)
-RUN apt-get update && apt-get install -y --no-install-recommends python3=3.8.2-0ubuntu2 \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     && rm -rf /var/lib/apt/lists/*
 
