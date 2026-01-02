@@ -13,6 +13,9 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             "full_name": self.user.full_name,
             "is_client": self.user.is_client,
             "is_seller": self.user.is_seller,
+            "is_verified": self.user.is_verified,
+            "is_phone_verified": self.user.is_phone_verified,
+            "is_email_verified": self.user.is_email_verified,
         }
         return data
 

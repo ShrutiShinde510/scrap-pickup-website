@@ -1,26 +1,25 @@
-import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import Navbar from './components/Navbar';
-import Footer from './components/Footer';
-import ProtectedRoute from './components/ProtectedRoute';
-import { useAuth } from './context/AuthContext';
+import React from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
+import Navbar from "./components/Navbar";
+import Footer from "./components/Footer";
+import ProtectedRoute from "./components/ProtectedRoute";
+import { useAuth } from "./context/AuthContext";
 
-import HomePage from './pages/HomePage';
-import LoginPage from './pages/LoginPage';
-import SignupPage from './pages/SignupPage';
-import VerifyEmailPage from './pages/VerifyEmailPage';
-import BookPickupPage from './pages/BookPickupPage';
-import VendorRegistrationPage from './pages/VendorRegistrationPage';
-import OTPPage from './pages/OTPPage';
+import HomePage from "./pages/HomePage";
+import LoginPage from "./pages/LoginPage";
+import SignupPage from "./pages/SignupPage";
+import VerifyEmailPage from "./pages/VerifyEmailPage";
+import BookPickupPage from "./pages/BookPickupPage";
+import VendorRegistrationPage from "./pages/VendorRegistrationPage";
 
-import './App.css';
-import ClientRegistrationModal from './components/ClientRegistrationModal';
+import "./App.css";
+import ClientRegistrationModal from "./components/ClientRegistrationModal";
 
 function App() {
   const { isAuthenticated } = useAuth();
 
-  const hideLayout = ['/login', '/signup', '/verify-email'].includes(
-    window.location.pathname
+  const hideLayout = ["/login", "/signup", "/verify-email"].includes(
+    window.location.pathname,
   );
 
   return (
@@ -62,7 +61,7 @@ function App() {
             element={<VendorRegistrationPage />}
           />
 
-          <Route path="/otp" element={<OTPPage />} />
+
 
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>

@@ -30,8 +30,9 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem("refresh_token", refresh);
       localStorage.setItem("user", JSON.stringify(user));
 
+      console.log("AuthContext: Login successful. User:", user);
       setUser(user);
-      return { success: true };
+      return { success: true, user };
     } catch (error) {
       console.error("Login Error:", error);
       return {
@@ -58,7 +59,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem("user", JSON.stringify(user));
 
       setUser(user);
-      return { success: true };
+      return { success: true, user };
     } catch (error) {
       console.error("Registration Error:", error);
       return { success: false, error: error.response?.data };
@@ -70,14 +71,20 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
+  const updateUser = (userData) => {
+    localStorage.setItem("user", JSON.stringify(userData));
+    setUser(userData);
+  };
+
   const value = {
     user,
     login,
     register,
     logout,
+    updateUser,
     isLoading: loading,
     isAuthenticated: !!user,
-    isVerified: user?.isVerified || false,
+    isVerified: user?.is_phone_verified || false,
   };
 
   return (

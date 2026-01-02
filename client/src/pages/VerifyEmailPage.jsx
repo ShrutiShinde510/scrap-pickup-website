@@ -1,41 +1,80 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Mail, CheckCircle, ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import api from '../api/axios';
 import './VerifyEmailPage.css';
 
 const VerifyEmailPage = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
-  const [email, setEmail] = useState('');
+  const location = useLocation();
+  const { user, updateUser, isAuthenticated } = useAuth();
   const [verificationCode, setVerificationCode] = useState(['', '', '', '', '', '']);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [resendTimer, setResendTimer] = useState(60);
   const [canResend, setCanResend] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+
+  // If redirected from somewhere, go back there after verification
+  const redirectTo = location.state?.redirectTo || '/';
 
   useEffect(() => {
-    const pendingEmail = localStorage.getItem('pendingVerification');
-    if (!pendingEmail) {
-      navigate('/signup');
+    console.log("VerifyEmailPage: Mounted. State:", { isAuthenticated, isPhoneVerified: user?.is_phone_verified, otpSent });
+    if (!isAuthenticated) {
+      console.log("VerifyEmailPage: Not authenticated, redirecting to /login");
+      navigate('/login');
       return;
     }
-    setEmail(pendingEmail);
 
-    // Timer for resend button
-    const timer = setInterval(() => {
-      setResendTimer(prev => {
-        if (prev <= 1) {
-          setCanResend(true);
-          clearInterval(timer);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
+    if (user?.is_phone_verified) {
+      console.log("VerifyEmailPage: Already verified, redirecting to", redirectTo);
+      navigate(redirectTo);
+    }
+  }, [isAuthenticated, user, navigate, redirectTo]);
 
+  // Initial OTP Send
+  useEffect(() => {
+    if (isAuthenticated && !otpSent && !user?.is_phone_verified) {
+      console.log("VerifyEmailPage: Triggering sendOtp...");
+      sendOtp();
+    }
+  }, [isAuthenticated, otpSent, user]);
+
+  const sendOtp = async () => {
+    try {
+      console.log("VerifyEmailPage: Sending OTP to", user?.phone_number);
+      // Assuming the backend sends OTP to the user's registered phone
+      // We need to pass 'contact' to the endpoint. 
+      // Since we are logged in, we can use user.phone_number
+      if (!user?.phone_number) {
+        console.error("VerifyEmailPage: User phone number missing");
+        setError("User phone number not found.");
+        return;
+      }
+
+      await api.post('otp/send/', { contact: user.phone_number, channel: 'sms' });
+      setOtpSent(true);
+      console.log("OTP Sent to", user.phone_number);
+    } catch (err) {
+      console.error("Failed to send OTP", err);
+      setError("Failed to send OTP. Please try resending.");
+    }
+  };
+
+  // Timer logic
+  useEffect(() => {
+    let timer;
+    if (resendTimer > 0) {
+      timer = setInterval(() => {
+        setResendTimer(prev => prev - 1);
+      }, 1000);
+    } else {
+      setCanResend(true);
+    }
     return () => clearInterval(timer);
-  }, [navigate]);
+  }, [resendTimer]);
+
 
   const handleCodeChange = (index, value) => {
     if (value.length > 1) value = value[0];
@@ -59,7 +98,7 @@ const VerifyEmailPage = () => {
 
   const handleVerify = async () => {
     const code = verificationCode.join('');
-    
+
     if (code.length !== 6) {
       setError('Please enter the complete 6-digit code');
       return;
@@ -68,78 +107,35 @@ const VerifyEmailPage = () => {
     setError('');
     setIsLoading(true);
 
-    setTimeout(() => {
-      const users = JSON.parse(localStorage.getItem('users') || '[]');
-      const user = users.find(u => u.email === email);
+    try {
+      const res = await api.post('account/verify/', { otp: code });
 
-      if (user && user.verificationCode === code) {
-        // Mark user as verified
-        user.isVerified = true;
-        localStorage.setItem('users', JSON.stringify(users));
-        localStorage.removeItem('pendingVerification');
+      // Success
+      const updatedUser = res.data.user;
+      updateUser(updatedUser);
 
-        // Auto login
-        const userData = {
-          id: user.id,
-          name: user.fullName,
-          email: user.email,
-          isVerified: true,
-          token: 'token_' + Date.now()
-        };
+      alert('Account verified successfully!');
+      navigate(redirectTo, { replace: true });
 
-        login(userData);
-        alert('Email verified successfully! Welcome to EcoScrap.');
-        navigate('/');
-      } else {
-        setError('Invalid verification code. Please try again.');
-        setVerificationCode(['', '', '', '', '', '']);
-        document.getElementById('code-0')?.focus();
-      }
+    } catch (err) {
+      console.error("Verification Error", err);
+      setError(err.response?.data?.error || 'Verification failed. Please try again.');
+      setVerificationCode(['', '', '', '', '', '']);
+      document.getElementById('code-0')?.focus();
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
-  const handleResendCode = () => {
+  const handleResendCode = async () => {
     if (!canResend) return;
-
-    // Generate new code
-    const users = JSON.parse(localStorage.getItem('users') || '[]');
-    const user = users.find(u => u.email === email);
-    
-    if (user) {
-      user.verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
-      localStorage.setItem('users', JSON.stringify(users));
-      alert(`New verification code sent: ${user.verificationCode} (Check console for demo)`);
-      console.log('New verification code:', user.verificationCode);
-    }
 
     setCanResend(false);
     setResendTimer(60);
-    
-    const timer = setInterval(() => {
-      setResendTimer(prev => {
-        if (prev <= 1) {
-          setCanResend(true);
-          clearInterval(timer);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-  };
+    setError('');
 
-  // Show verification code in console for demo
-  useEffect(() => {
-    if (email) {
-      const users = JSON.parse(localStorage.getItem('users') || '[]');
-      const user = users.find(u => u.email === email);
-      if (user) {
-        console.log('='.repeat(50));
-        console.log('DEMO MODE - Verification Code:', user.verificationCode);
-        console.log('='.repeat(50));
-      }
-    }
-  }, [email]);
+    await sendOtp();
+  };
 
   return (
     <div className="verify-page">
@@ -148,10 +144,10 @@ const VerifyEmailPage = () => {
           <Mail size={60} className="verify-icon" />
         </div>
 
-        <h1 className="verify-title">Verify Your Email</h1>
+        <h1 className="verify-title">Verify Your Phone</h1>
         <p className="verify-subtitle">
-          We've sent a 6-digit verification code to<br/>
-          <strong>{email}</strong>
+          We've sent a 6-digit verification code to your phone number ending in<br />
+          <strong>...{user?.phone_number?.slice(-4)}</strong>
         </p>
 
         {error && (
@@ -176,9 +172,9 @@ const VerifyEmailPage = () => {
           ))}
         </div>
 
-        <button 
-          onClick={handleVerify} 
-          className="btn-verify" 
+        <button
+          onClick={handleVerify}
+          className="btn-verify"
           disabled={isLoading || verificationCode.join('').length !== 6}
         >
           {isLoading ? (
@@ -189,25 +185,21 @@ const VerifyEmailPage = () => {
           ) : (
             <>
               <CheckCircle size={20} />
-              Verify Email
+              Verify
             </>
           )}
         </button>
 
         <div className="verify-footer">
           <p>Didn't receive the code?</p>
-          <button 
-            onClick={handleResendCode} 
+          <button
+            onClick={handleResendCode}
             className="btn-resend"
             disabled={!canResend}
           >
             {canResend ? 'Resend Code' : `Resend in ${resendTimer}s`}
           </button>
         </div>
-
-        <button onClick={() => navigate('/signup')} className="btn-back-signup">
-          ← Back to Sign Up
-        </button>
       </div>
     </div>
   );

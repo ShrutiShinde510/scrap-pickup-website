@@ -8,7 +8,9 @@ from .views import (
     ContactInfoView,
     VerifyOTPView,
     VerifyPickupOTPView,
-    SendOTPView
+    VerifyPickupOTPView,
+    SendOTPView,
+    VerifyAccountView
 )
 
 urlpatterns = [
@@ -16,6 +18,7 @@ urlpatterns = [
     path("register/seller/", SellerRegistrationView.as_view(), name="register_seller"),
     path("otp/send/", SendOTPView.as_view(), name="otp_send"),
     path("otp/verify/", VerifyOTPView.as_view(), name="otp_verify"),
+    path("account/verify/", VerifyAccountView.as_view(), name="account_verify"),
     path("login/", CustomTokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     

@@ -216,3 +216,44 @@ class ContactInfoView(GenericAPIView):
             return Response(
                 {"error": "Pickup request not found"}, status=status.HTTP_404_NOT_FOUND
             )
+
+
+class VerifyAccountView(GenericAPIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        otp = request.data.get("otp")
+        if not otp:
+            return Response(
+                {"error": "OTP is required"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        user = request.user
+        otp_service = OTPService()
+        
+        # Verify using user's phone number
+        is_valid = otp_service.verify_otp(user.phone_number, otp)
+
+        if is_valid:
+            user.is_phone_verified = True
+            user.is_email_verified = True
+            user.save()
+            return Response(
+                {
+                    "message": "Account verified successfully",
+                    "user": {
+                        "email": user.email,
+                        "full_name": user.full_name,
+                        "is_client": user.is_client,
+                        "is_seller": user.is_seller,
+                        "is_verified": user.is_verified,
+                        "is_phone_verified": user.is_phone_verified,
+                        "is_email_verified": user.is_email_verified,
+                    }
+                },
+                status=status.HTTP_200_OK,
+            )
+        
+        return Response(
+            {"error": "Invalid or expired OTP"}, status=status.HTTP_400_BAD_REQUEST
+        )
