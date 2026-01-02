@@ -28,8 +28,12 @@ def get_auth_response(user, message):
             "user": {
                 "email": user.email,
                 "full_name": user.full_name,
+                "phone_number": user.phone_number,
                 "is_client": user.is_client,
                 "is_seller": user.is_seller,
+                "is_verified": user.is_verified,
+                "is_phone_verified": user.is_phone_verified,
+                "is_email_verified": user.is_email_verified,
             },
             "refresh": str(refresh),
             "access": str(refresh.access_token),
@@ -244,6 +248,7 @@ class VerifyAccountView(GenericAPIView):
                     "user": {
                         "email": user.email,
                         "full_name": user.full_name,
+                        "phone_number": user.phone_number,
                         "is_client": user.is_client,
                         "is_seller": user.is_seller,
                         "is_verified": user.is_verified,

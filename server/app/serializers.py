@@ -11,6 +11,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         data["user"] = {
             "email": self.user.email,
             "full_name": self.user.full_name,
+            "phone_number": self.user.phone_number,
             "is_client": self.user.is_client,
             "is_seller": self.user.is_seller,
             "is_verified": self.user.is_verified,
