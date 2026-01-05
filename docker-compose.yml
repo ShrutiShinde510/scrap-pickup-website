@@ -12,6 +12,8 @@ services:
 
   server:
     build: ./server
+    volumes:
+      - ./server:/app
     # command is handled by Dockerfile ENTRYPOINT
     ports:
       - "8000:8000"

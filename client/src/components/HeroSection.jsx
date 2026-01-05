@@ -17,7 +17,7 @@ const HeroSection = ({ onRegisterClick }) => {
             onClick={() => navigate("/book-pickup")}
             className="btn-secondary"
           >
-            Book Pickup Now Lol
+            Book Pickup Now
           </button>
         </div>
       </div>

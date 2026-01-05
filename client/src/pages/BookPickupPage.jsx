@@ -137,6 +137,11 @@ const BookPickupPage = () => {
 
     try {
       const payload = new FormData();
+      payload.append("scrap_type", formData.scrapType);
+      payload.append("quantity", formData.quantity);
+      if (estimatedPrice) {
+        payload.append("estimated_price", estimatedPrice);
+      }
       payload.append("address", formData.address); // Combine address parts if needed or send as is
       payload.append("latitude", 0); // Placeholder if not using maps yet
       payload.append("longitude", 0); // Placeholder
@@ -156,7 +161,7 @@ const BookPickupPage = () => {
       console.error("Booking Error:", err);
       setError(
         err.response?.data?.error ||
-          "Failed to create booking. Please try again.",
+        "Failed to create booking. Please try again.",
       );
     }
   };

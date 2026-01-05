@@ -83,6 +83,11 @@ class PickupRequest(models.Model):
         related_name="assigned_pickups",
     )
 
+    # Scrap Details
+    scrap_type = models.CharField(max_length=50, default="Mixed")
+    quantity = models.DecimalField(max_digits=10, decimal_places=2, help_text="Quantity in Kg", default=0.0)
+    estimated_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+
     # contact & verification
     contact_name = models.CharField(max_length=150, blank=True)
     contact_phone = models.CharField(max_length=15, blank=True)

@@ -15,6 +15,7 @@ import {
   Eye,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import api from "../api/axios";
 import "./ClientDashboard.css";
 
 const ClientDashboard = () => {
@@ -39,23 +40,27 @@ const ClientDashboard = () => {
     loadBookings();
   }, [user, navigate]);
 
-  const loadBookings = () => {
-    const allBookings = JSON.parse(localStorage.getItem("bookings") || "[]");
-    const userBookings = allBookings.filter((b) => b.userId === user?.id);
-    setBookings(userBookings);
+  const loadBookings = async () => {
+    try {
+      const res = await api.get("pickup/list/");
+      const userBookings = res.data;
+      setBookings(userBookings);
 
-    // Calculate statistics
-    const stats = {
-      totalBookings: userBookings.length,
-      pendingBookings: userBookings.filter((b) => b.status === "pending")
-        .length,
-      completedBookings: userBookings.filter((b) => b.status === "completed")
-        .length,
-      totalEarnings: userBookings
-        .filter((b) => b.status === "completed")
-        .reduce((sum, b) => sum + parseFloat(b.estimatedPrice || 0), 0),
-    };
-    setStats(stats);
+      // Calculate statistics
+      const stats = {
+        totalBookings: userBookings.length,
+        pendingBookings: userBookings.filter((b) => b.status === "pending")
+          .length,
+        completedBookings: userBookings.filter((b) => b.status === "completed")
+          .length,
+        totalEarnings: userBookings
+          .filter((b) => b.status === "completed")
+          .reduce((sum, b) => sum + parseFloat(b.estimated_price || 0), 0),
+      };
+      setStats(stats);
+    } catch (err) {
+      console.error("Failed to load bookings:", err);
+    }
   };
 
   const getStatusBadge = (status) => {
@@ -90,16 +95,17 @@ const ClientDashboard = () => {
     );
   };
 
-  const handleCancelBooking = (bookingId) => {
+  const handleCancelBooking = async (bookingId) => {
     if (!confirm("Are you sure you want to cancel this booking?")) return;
 
-    const allBookings = JSON.parse(localStorage.getItem("bookings") || "[]");
-    const updatedBookings = allBookings.map((b) =>
-      b.id === bookingId ? { ...b, status: "cancelled" } : b,
-    );
-    localStorage.setItem("bookings", JSON.stringify(updatedBookings));
-    loadBookings();
-    alert("Booking cancelled successfully");
+    try {
+      await api.post(`pickup/cancel/${bookingId}/`);
+      loadBookings();
+      alert("Booking cancelled successfully");
+    } catch (err) {
+      console.error("Cancel Error:", err);
+      alert("Failed to cancel booking");
+    }
   };
 
   // Overview Tab
@@ -171,7 +177,7 @@ const ClientDashboard = () => {
             <div className="booking-details">
               <div className="detail-row">
                 <span className="label">Scrap Type:</span>
-                <span className="value">{booking.scrapType}</span>
+                <span className="value">{booking.scrap_type}</span>
               </div>
               <div className="detail-row">
                 <span className="label">Quantity:</span>
@@ -179,12 +185,12 @@ const ClientDashboard = () => {
               </div>
               <div className="detail-row">
                 <span className="label">Estimated Price:</span>
-                <span className="value price">₹{booking.estimatedPrice}</span>
+                <span className="value price">₹{booking.estimated_price}</span>
               </div>
               <div className="detail-row">
                 <span className="label">Date:</span>
                 <span className="value">
-                  {new Date(booking.pickupDate).toLocaleDateString()}
+                  {new Date(booking.date).toLocaleDateString()}
                 </span>
               </div>
             </div>
@@ -203,7 +209,7 @@ const ClientDashboard = () => {
               className="btn-primary"
               onClick={() => navigate("/book-pickup")}
             >
-              Book Pickup Now Lol
+              Book Pickup Now
             </button>
           </div>
         )}
@@ -231,7 +237,7 @@ const ClientDashboard = () => {
               <div>
                 <h3>{booking.id}</h3>
                 <p className="booking-date">
-                  Booked on {new Date(booking.createdAt).toLocaleDateString()}
+                  Booked on {new Date(booking.date).toLocaleDateString()}
                 </p>
               </div>
               {getStatusBadge(booking.status)}
@@ -243,7 +249,7 @@ const ClientDashboard = () => {
                   <Package size={18} />
                   <div>
                     <span className="label">Scrap Type</span>
-                    <span className="value">{booking.scrapType}</span>
+                    <span className="value">{booking.scrap_type}</span>
                   </div>
                 </div>
 
@@ -259,7 +265,7 @@ const ClientDashboard = () => {
                   <DollarSign size={18} />
                   <div>
                     <span className="label">Estimated Price</span>
-                    <span className="value">₹{booking.estimatedPrice}</span>
+                    <span className="value">₹{booking.estimated_price}</span>
                   </div>
                 </div>
 
@@ -268,7 +274,7 @@ const ClientDashboard = () => {
                   <div>
                     <span className="label">Pickup Date</span>
                     <span className="value">
-                      {new Date(booking.pickupDate).toLocaleDateString()}
+                      {new Date(booking.date).toLocaleDateString()}
                     </span>
                   </div>
                 </div>
