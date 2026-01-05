@@ -1,7 +1,3 @@
-/* ============================================
-   FILE: src/pages/BookPickupPage.css
-   ============================================ */
-
 .booking-page {
   min-height: 100vh;
   background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
@@ -484,4 +480,156 @@
   .success-title {
     font-size: 28px;
   }
+}
+
+
+.success-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-top: 30px;
+  width: 100%;
+  max-width: 500px;
+}
+
+/* Primary Button - Go to Dashboard */
+.btn-dashboard {
+  width: 100%;
+  padding: 16px 30px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.btn-dashboard:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 25px rgba(102, 126, 234, 0.5);
+  background: linear-gradient(135deg, #5568d3 0%, #6a3e8f 100%);
+}
+
+.btn-dashboard:active {
+  transform: translateY(-1px);
+}
+
+/* Secondary Button - Book Another Pickup */
+.btn-new-booking {
+  width: 100%;
+  padding: 16px 30px;
+  background: white;
+  color: #667eea;
+  border: 2px solid #667eea;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: all 0.3s ease;
+}
+
+.btn-new-booking:hover {
+  background: #667eea;
+  color: white;
+  transform: translateY(-3px);
+  box-shadow: 0 6px 25px rgba(102, 126, 234, 0.3);
+}
+
+.btn-new-booking:active {
+  transform: translateY(-1px);
+}
+
+/* Tertiary Button - Back to Home Link */
+.btn-home-link {
+  width: 100%;
+  padding: 12px 20px;
+  background: transparent;
+  color: #6b7280;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-home-link:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+/* Update existing btn-home if you want to keep it */
+.btn-home {
+  width: 100%;
+  max-width: 300px;
+  padding: 14px 30px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 30px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+}
+
+.btn-home:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 25px rgba(16, 185, 129, 0.5);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .success-actions {
+    max-width: 100%;
+  }
+
+  .btn-dashboard,
+  .btn-new-booking,
+  .btn-home-link {
+    font-size: 15px;
+    padding: 14px 24px;
+  }
+}
+
+/* Optional: Add animation to buttons on page load */
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.success-actions {
+  animation: slideUp 0.6s ease-out;
+}
+
+/* Add stagger effect to buttons */
+.btn-dashboard {
+  animation: slideUp 0.6s ease-out;
+}
+
+.btn-new-booking {
+  animation: slideUp 0.7s ease-out;
+}
+
+.btn-home-link {
+  animation: slideUp 0.8s ease-out;
 }

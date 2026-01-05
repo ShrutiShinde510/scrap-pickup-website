@@ -1,3 +1,4 @@
+
 import React, { useState , useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Upload, MapPin, Calendar, Clock, Package, DollarSign, CheckCircle } from 'lucide-react';
@@ -20,7 +21,7 @@ const BookPickupPage = () => {
     landmark: '',
     pickupDate: '',
     timeSlot: '',
-    additionalNotes: ''
+    additionalNotes: '' 
   });
 
   const [estimatedPrice, setEstimatedPrice] = useState(null);
@@ -144,7 +145,7 @@ const BookPickupPage = () => {
         <div className="booking-container">
           <div className="booking-header">
             <Package size={40} className="header-icon" />
-            <h1>Book Scrap Pickup</h1>
+            <h1>Book 1 Scrap Pickup</h1>
             <p>Step 1 of 4: Scrap Details</p>
             <div className="progress-bar">
               <div className="progress-fill" style={{width: '25%'}}></div>
@@ -346,6 +347,9 @@ const BookPickupPage = () => {
                     key={idx}
                     className={`time-slot-card ${formData.timeSlot === slot.value ? 'selected' : ''}`}
                   >
+              
+            
+
                     <input
                       type="radio"
                       name="timeSlot"
@@ -373,7 +377,7 @@ const BookPickupPage = () => {
 
             <div className="button-group">
               <button onClick={handleBack} className="btn-back">← Back</button>
-              <button onClick={handleNext} className="btn-next">Review Booking →</button>
+              <button onClick={handleNext} className="btn-next">Review Booking →</button> 
             </div>
           </div>
         </div>
@@ -381,7 +385,7 @@ const BookPickupPage = () => {
     );
   }
 
-  // Step 4: Review & Confirm
+  // Step 4: Review & Confirm 
   if (currentStep === 4) {
     return (
       <div className="booking-page">
@@ -451,7 +455,7 @@ const BookPickupPage = () => {
   }
 
   // Step 5: Success
-  if (currentStep === 5) {
+ /* if (currentStep === 5) {
     return (
       <div className="booking-page">
         <div className="booking-container success-container">
@@ -498,7 +502,106 @@ const BookPickupPage = () => {
         </div>
       </div>
     );
-  }
+  }*/
+
+
+if (currentStep === 5) {
+  return (
+    <div className="booking-page">
+      <div className="booking-container success-container">
+        <div className="success-icon">
+          <CheckCircle size={80} />
+        </div>
+        <h1 className="success-title">Booking Confirmed!</h1>
+        <p className="success-subtitle">Your scrap pickup has been scheduled successfully</p>
+
+        <div className="booking-id-card">
+          <h3>Booking ID</h3>
+          <p className="booking-id">{bookingId}</p>
+          <small>Save this ID for tracking your pickup</small>
+        </div>
+
+        <div className="success-details">
+          <div className="detail-item">
+            <Calendar size={20} />
+            <span>{new Date(formData.pickupDate).toLocaleDateString()}</span>
+          </div>
+          <div className="detail-item">
+            <Clock size={20} />
+            <span>{timeSlots.find(s => s.value === formData.timeSlot)?.label}</span>
+          </div>
+          <div className="detail-item">
+            <DollarSign size={20} />
+            <span>₹{estimatedPrice} (estimated)</span>
+          </div>
+        </div>
+
+        <div className="success-info">
+          <h4>What's Next?</h4>
+          <ul>
+            <li>✓ A vendor will be assigned to your booking</li>
+            <li>✓ You'll receive a confirmation email</li>
+            <li>✓ Vendor will arrive at scheduled time</li>
+            <li>✓ Payment after pickup completion</li>
+          </ul>
+        </div>
+
+        {/* ✅ NEW: Dashboard Navigation Buttons */}
+        <div className="success-actions">
+          <button 
+            onClick={() => {
+              if (user?.role === 'vendor') {
+                navigate('/vendor-dashboard');
+              } else {
+                navigate('/dashboard');
+              }
+            }} 
+            className="btn-dashboard"
+          >
+            📊 Go to Dashboard
+          </button>
+
+          <button 
+            onClick={() => {
+              setCurrentStep(1);
+              setFormData({
+                scrapType: '',
+                quantity: '',
+                scrapImage: null,
+                address: '',
+                city: '',
+                pincode: '',
+                landmark: '',
+                pickupDate: '',
+                timeSlot: '',
+                additionalNotes: ''
+              });
+              setEstimatedPrice(null);
+              setBookingId(null);
+              setError('');
+            }} 
+            className="btn-new-booking"
+          >
+            📦 Book Another Pickup
+          </button>
+
+          <button 
+            onClick={() => navigate('/')} 
+            className="btn-home-link"
+          >
+            🏠 Back to Home
+          </button>
+        </div>
+
+        {/* ❌ REMOVE THIS OLD BUTTON IF IT EXISTS */}
+        {/* <button onClick={() => navigate('/')} className="btn-home">
+          Back to Home
+        </button> */}
+
+      </div>
+    </div>
+  );
+}
 
   return null;
 };

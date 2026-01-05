@@ -11,6 +11,7 @@ import SignupPage from "./pages/SignupPage";
 import VerifyEmailPage from "./pages/VerifyEmailPage";
 import BookPickupPage from "./pages/BookPickupPage";
 import VendorRegistrationPage from "./pages/VendorRegistrationPage";
+import ClientDashboard from './pages/ClientDashboard';
 
 import "./App.css";
 import ClientRegistrationModal from "./components/ClientRegistrationModal";
@@ -60,6 +61,30 @@ function App() {
             path="/vendor-registration"
             element={<VendorRegistrationPage />}
           />
+
+          <Route
+  path="/dashboard"
+  element={
+    <ProtectedRoute requireVerification>
+      <ClientDashboard />
+    </ProtectedRoute>
+  }
+/>
+
+
+
+
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute requireVerification>
+                <ClientDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Redirects */}
+          <Route path="/client-registration" element={<Navigate to="/signup" />} />
 
 
 
