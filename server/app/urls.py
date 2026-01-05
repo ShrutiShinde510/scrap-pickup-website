@@ -10,7 +10,9 @@ from .views import (
     VerifyPickupOTPView,
     VerifyPickupOTPView,
     SendOTPView,
-    VerifyAccountView
+    VerifyAccountView,
+    UserBookingsView,
+    CancelPickupView,
 )
 
 urlpatterns = [
@@ -24,6 +26,8 @@ urlpatterns = [
     
     # Pickup Flow
     path("pickup/create/", CreatePickupView.as_view(), name="pickup_create"),
+    path("pickup/list/", UserBookingsView.as_view(), name="pickup_list"),
+    path("pickup/cancel/<int:pk>/", CancelPickupView.as_view(), name="pickup_cancel"),
     path("pickup/contact/", ContactInfoView.as_view(), name="pickup_contact"),
     path("pickup/verify-otp/", VerifyPickupOTPView.as_view(), name="pickup_verify_otp"),
 ]

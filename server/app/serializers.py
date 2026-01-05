@@ -155,11 +155,14 @@ class PickupRequestSerializer(serializers.ModelSerializer):
             "time_slot",
             "scrape_image",
             "status",
-            "contact_name",
             "contact_phone",
             "is_phone_verified",
+            "scrap_type",
+            "quantity",
+            "estimated_price",
+            "created_at",
         ]
-        read_only_fields = ["id", "status", "is_phone_verified"]
+        read_only_fields = ["id", "status", "is_phone_verified", "created_at"]
 
 
 class OTPVerificationSerializer(serializers.Serializer):

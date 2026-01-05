@@ -2,8 +2,8 @@
 
 # Wait for postgres to be ready
 echo "Waiting for PostgreSQL to start..."
-while ! nc -z $DATABASE_HOST $DATABASE_PORT; do
-  sleep 0.1
+while ! python -c "import socket, os; s = socket.socket(socket.AF_INET, socket.SOCK_STREAM); s.settimeout(1); exit(s.connect_ex((os.environ['DATABASE_HOST'], int(os.environ['DATABASE_PORT']))))"; do
+  sleep 1
 done
 echo "PostgreSQL started"
 

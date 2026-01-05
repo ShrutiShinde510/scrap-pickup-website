@@ -262,3 +262,37 @@ class VerifyAccountView(GenericAPIView):
         return Response(
             {"error": "Invalid or expired OTP"}, status=status.HTTP_400_BAD_REQUEST
         )
+
+
+class UserBookingsView(GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = PickupRequestSerializer
+
+    def get(self, request):
+        bookings = PickupRequest.objects.filter(user=request.user).order_by("-created_at")
+        serializer = self.get_serializer(bookings, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class CancelPickupView(GenericAPIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        try:
+            pickup = PickupRequest.objects.get(id=pk, user=request.user)
+            if pickup.status == "pending":
+                pickup.status = "cancelled"
+                pickup.save()
+                return Response(
+                    {"message": "Booking cancelled successfully"},
+                    status=status.HTTP_200_OK,
+                )
+            else:
+                return Response(
+                    {"error": "Cannot cancel booking. Status is not pending."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        except PickupRequest.DoesNotExist:
+            return Response(
+                {"error": "Booking not found"}, status=status.HTTP_404_NOT_FOUND
+            )
