@@ -17,7 +17,11 @@ import "./App.css";
 import ClientRegistrationModal from "./components/ClientRegistrationModal";
 
 function App() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  }
 
   const hideLayout = ["/login", "/signup", "/verify-email"].includes(
     window.location.pathname,
@@ -63,13 +67,13 @@ function App() {
           />
 
           <Route
-  path="/dashboard"
-  element={
-    <ProtectedRoute requireVerification>
-      <ClientDashboard />
-    </ProtectedRoute>
-  }
-/>
+            path="/dashboard"
+            element={
+              <ProtectedRoute requireVerification>
+                <ClientDashboard />
+              </ProtectedRoute>
+            }
+          />
 
 
 

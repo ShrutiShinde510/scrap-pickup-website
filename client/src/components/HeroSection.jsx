@@ -1,6 +1,6 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import './HeroSection.css';
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import "./HeroSection.css";
 
 const HeroSection = ({ onRegisterClick }) => {
   const navigate = useNavigate();
@@ -9,11 +9,16 @@ const HeroSection = ({ onRegisterClick }) => {
     <section className="hero-section">
       <div className="hero-container">
         <h1 className="hero-title">Sell Your Scrap from Home & Industry</h1>
-        <p className="hero-subtitle">Easy, Quick & Environment-Friendly Scrap Pickup Service</p>
+        <p className="hero-subtitle">
+          Easy, Quick & Environment-Friendly Scrap Pickup Service
+        </p>
         <div className="hero-buttons">
-         
-          <button onClick={() => navigate('/book-pickup')} className="btn-secondary">Book Pickup Now</button>
-          
+          <button
+            onClick={() => navigate("/book-pickup")}
+            className="btn-secondary"
+          >
+            Book Pickup Now Lol
+          </button>
         </div>
       </div>
     </section>
@@ -21,3 +26,4 @@ const HeroSection = ({ onRegisterClick }) => {
 };
 
 export default HeroSection;
+

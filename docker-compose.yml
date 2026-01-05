@@ -12,13 +12,14 @@ services:
 
   server:
     build: ./server
-    command: python manage.py runserver 0.0.0.0:8000
+    # command is handled by Dockerfile ENTRYPOINT
     ports:
       - "8000:8000"
     environment:
-      - DEBUG=1
-      - SECRET_KEY=django-insecure-docker-key
-      - DJANGO_ALLOWED_HOSTS=localhost 127.0.0.1 [::1] server
+      - DEBUG=${DEBUG:-0}
+      - SECRET_KEY=${SECRET_KEY}
+      - DJANGO_ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS:-localhost 127.0.0.1 [::1] server}
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-http://localhost:5173,http://localhost:3000,http://localhost:8080}
       - DATABASE_ENGINE=django.db.backends.postgresql
       - DATABASE_NAME=scrape_collection_db
       - DATABASE_USER=postgres
@@ -33,9 +34,18 @@ services:
       - db
 
   client:
-    build: ./client
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+      target: build
+    command: npm run dev -- --host
+    volumes:
+      - ./client:/app
+      - /app/node_modules
     ports:
-      - "3000:80"
+      - "3000:5173"
+    environment:
+      - VITE_API_URL=${VITE_API_URL:-http://localhost:8000/api/}
     depends_on:
       - server
 
