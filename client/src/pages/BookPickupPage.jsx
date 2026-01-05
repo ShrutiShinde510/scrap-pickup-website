@@ -145,7 +145,7 @@ const BookPickupPage = () => {
         <div className="booking-container">
           <div className="booking-header">
             <Package size={40} className="header-icon" />
-            <h1>Book 1 Scrap Pickup</h1>
+            <h1>book now Scrap Pickup</h1>
             <p>Step 1 of 4: Scrap Details</p>
             <div className="progress-bar">
               <div className="progress-fill" style={{width: '25%'}}></div>
