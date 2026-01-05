@@ -1,47 +1,62 @@
-
-import React, { useState , useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Upload, MapPin, Calendar, Clock, Package, DollarSign, CheckCircle } from 'lucide-react';
-import { scrapCategories, cities, timeSlots } from '../data/scrapData';
-import { useAuth } from '../context/AuthContext';
-import './BookPickupPage.css';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  Upload,
+  MapPin,
+  Calendar,
+  Clock,
+  Package,
+  DollarSign,
+  CheckCircle,
+} from "lucide-react";
+import { scrapCategories, cities, timeSlots } from "../data/scrapData";
+import { useAuth } from "../context/AuthContext";
+import api from "../api/axios";
+import "./BookPickupPage.css";
 
 const BookPickupPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
-  
+
   const [formData, setFormData] = useState({
-    scrapType: '',
-    quantity: '',
+    scrapType: "",
+    quantity: "",
     scrapImage: null,
-    address: '',
-    city: '',
-    pincode: '',
-    landmark: '',
-    pickupDate: '',
-    timeSlot: '',
-    additionalNotes: '' 
+    address: "",
+    city: "",
+    pincode: "",
+    landmark: "",
+    pickupDate: "",
+    timeSlot: "",
+    additionalNotes: "",
   });
 
   const [estimatedPrice, setEstimatedPrice] = useState(null);
   const [bookingId, setBookingId] = useState(null);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   useEffect(() => {
-  if (!user) {
-    navigate('/login', {
-      state: { redirectTo: '/book-pickup' }
-    });
-  }
-}, [user, navigate]);
+    if (!user) {
+      navigate("/login", {
+        state: { redirectTo: "/book-pickup" },
+      });
+    }
+  }, [user, navigate]);
 
   const calculatePrice = () => {
     if (formData.scrapType && formData.quantity) {
-      const category = scrapCategories.find(cat => cat.name === formData.scrapType);
+      if (parseFloat(formData.quantity) < 0) {
+        setEstimatedPrice(null);
+        return;
+      }
+      const category = scrapCategories.find(
+        (cat) => cat.name === formData.scrapType,
+      );
       if (category) {
-        const priceRange = category.price.split('-');
-        const avgPrice = (parseInt(priceRange[0]) + parseInt(priceRange[1])) / 2;
+        const priceRange = category.price.split("-");
+        const avgPrice =
+          (parseInt(priceRange[0]) + parseInt(priceRange[1])) / 2;
         const total = avgPrice * parseFloat(formData.quantity);
         setEstimatedPrice(total.toFixed(2));
       }
@@ -52,57 +67,57 @@ const BookPickupPage = () => {
     const file = e.target.files[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
-        setError('Image size must be less than 5MB');
+        setError("Image size must be less than 5MB");
         return;
       }
       setFormData({ ...formData, scrapImage: file });
-      setError('');
+      setError("");
     }
   };
 
   const validateStep = (step) => {
-    setError('');
-    
+    setError("");
+
     if (step === 1) {
       if (!formData.scrapType || !formData.quantity) {
-        setError('Please select scrap type and enter quantity');
+        setError("Please select scrap type and enter quantity");
         return false;
       }
       if (parseFloat(formData.quantity) <= 0) {
-        setError('Quantity must be greater than 0');
+        setError("Quantity must be greater than 0");
         return false;
       }
       calculatePrice();
       return true;
     }
-    
+
     if (step === 2) {
       if (!formData.address || !formData.city || !formData.pincode) {
-        setError('Please fill all address fields');
+        setError("Please fill all address fields");
         return false;
       }
       if (formData.pincode.length !== 6) {
-        setError('Please enter valid 6-digit pincode');
+        setError("Please enter valid 6-digit pincode");
         return false;
       }
       return true;
     }
-    
+
     if (step === 3) {
       if (!formData.pickupDate || !formData.timeSlot) {
-        setError('Please select pickup date and time slot');
+        setError("Please select pickup date and time slot");
         return false;
       }
       const selectedDate = new Date(formData.pickupDate);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       if (selectedDate < today) {
-        setError('Pickup date cannot be in the past');
+        setError("Pickup date cannot be in the past");
         return false;
       }
       return true;
     }
-    
+
     return true;
   };
 
@@ -113,29 +128,37 @@ const BookPickupPage = () => {
   };
 
   const handleBack = () => {
-    setError('');
+    setError("");
     setCurrentStep(currentStep - 1);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validateStep(currentStep)) return;
 
-    const bookings = JSON.parse(localStorage.getItem('bookings') || '[]');
-    const newBooking = {
-      id: 'BP' + Date.now(),
-      userId: user?.id,
-      userName: user?.name,
-      userEmail: user?.email,
-      ...formData,
-      estimatedPrice,
-      status: 'pending',
-      createdAt: new Date().toISOString()
-    };
+    try {
+      const payload = new FormData();
+      payload.append("address", formData.address); // Combine address parts if needed or send as is
+      payload.append("latitude", 0); // Placeholder if not using maps yet
+      payload.append("longitude", 0); // Placeholder
+      payload.append("date", formData.pickupDate);
+      payload.append("time_slot", formData.timeSlot);
+      if (formData.scrapImage) {
+        payload.append("scrape_image", formData.scrapImage);
+      }
 
-    bookings.push(newBooking);
-    localStorage.setItem('bookings', JSON.stringify(bookings));
-    setBookingId(newBooking.id);
-    setCurrentStep(5);
+      const res = await api.post("pickup/create/", payload, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      setBookingId(res.data.request_id || "BP" + Date.now());
+      setCurrentStep(5);
+    } catch (err) {
+      console.error("Booking Error:", err);
+      setError(
+        err.response?.data?.error ||
+          "Failed to create booking. Please try again.",
+      );
+    }
   };
 
   // Step 1: Scrap Details
@@ -148,7 +171,7 @@ const BookPickupPage = () => {
             <h1>Book 1 Scrap Pickup</h1>
             <p>Step 1 of 4: Scrap Details</p>
             <div className="progress-bar">
-              <div className="progress-fill" style={{width: '25%'}}></div>
+              <div className="progress-fill" style={{ width: "25%" }}></div>
             </div>
           </div>
 
@@ -161,12 +184,12 @@ const BookPickupPage = () => {
                 className="select-input"
                 value={formData.scrapType}
                 onChange={(e) => {
-                  setFormData({...formData, scrapType: e.target.value});
+                  setFormData({ ...formData, scrapType: e.target.value });
                   setEstimatedPrice(null);
                 }}
               >
                 <option value="">Select Scrap Category</option>
-                {scrapCategories.map(cat => (
+                {scrapCategories.map((cat) => (
                   <option key={cat.id} value={cat.name}>
                     {cat.icon} {cat.name} (₹{cat.price}/kg)
                   </option>
@@ -182,7 +205,7 @@ const BookPickupPage = () => {
                 className="text-input"
                 value={formData.quantity}
                 onChange={(e) => {
-                  setFormData({...formData, quantity: e.target.value});
+                  setFormData({ ...formData, quantity: e.target.value });
                   setEstimatedPrice(null);
                 }}
               />
@@ -200,7 +223,9 @@ const BookPickupPage = () => {
                 <div>
                   <h3>Estimated Price</h3>
                   <p className="price">₹{estimatedPrice}</p>
-                  <small>Final price may vary based on actual quantity and quality</small>
+                  <small>
+                    Final price may vary based on actual quantity and quality
+                  </small>
                 </div>
               </div>
             )}
@@ -217,7 +242,9 @@ const BookPickupPage = () => {
                   id="scrap-image"
                 />
                 <label htmlFor="scrap-image" className="upload-label">
-                  {formData.scrapImage ? '✓ ' + formData.scrapImage.name : 'Click to upload image'}
+                  {formData.scrapImage
+                    ? "✓ " + formData.scrapImage.name
+                    : "Click to upload image"}
                 </label>
                 <small>Helps us verify the scrap type (Max 5MB)</small>
               </div>
@@ -242,7 +269,7 @@ const BookPickupPage = () => {
             <h1>Pickup Address</h1>
             <p>Step 2 of 4: Address Details</p>
             <div className="progress-bar">
-              <div className="progress-fill" style={{width: '50%'}}></div>
+              <div className="progress-fill" style={{ width: "50%" }}></div>
             </div>
           </div>
 
@@ -256,7 +283,9 @@ const BookPickupPage = () => {
                 className="text-input"
                 rows="3"
                 value={formData.address}
-                onChange={(e) => setFormData({...formData, address: e.target.value})}
+                onChange={(e) =>
+                  setFormData({ ...formData, address: e.target.value })
+                }
               />
             </div>
 
@@ -266,11 +295,15 @@ const BookPickupPage = () => {
                 <select
                   className="select-input"
                   value={formData.city}
-                  onChange={(e) => setFormData({...formData, city: e.target.value})}
+                  onChange={(e) =>
+                    setFormData({ ...formData, city: e.target.value })
+                  }
                 >
                   <option value="">Select City</option>
                   {cities.map((city, idx) => (
-                    <option key={idx} value={city}>{city}</option>
+                    <option key={idx} value={city}>
+                      {city}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -283,7 +316,12 @@ const BookPickupPage = () => {
                   className="text-input"
                   maxLength="6"
                   value={formData.pincode}
-                  onChange={(e) => setFormData({...formData, pincode: e.target.value.replace(/\D/g, '')})}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      pincode: e.target.value.replace(/\D/g, ""),
+                    })
+                  }
                 />
               </div>
             </div>
@@ -295,13 +333,19 @@ const BookPickupPage = () => {
                 placeholder="e.g., Near City Mall, Behind Bank"
                 className="text-input"
                 value={formData.landmark}
-                onChange={(e) => setFormData({...formData, landmark: e.target.value})}
+                onChange={(e) =>
+                  setFormData({ ...formData, landmark: e.target.value })
+                }
               />
             </div>
 
             <div className="button-group">
-              <button onClick={handleBack} className="btn-back">← Back</button>
-              <button onClick={handleNext} className="btn-next">Next: Schedule →</button>
+              <button onClick={handleBack} className="btn-back">
+                ← Back
+              </button>
+              <button onClick={handleNext} className="btn-next">
+                Next: Schedule →
+              </button>
             </div>
           </div>
         </div>
@@ -311,7 +355,7 @@ const BookPickupPage = () => {
 
   // Step 3: Schedule
   if (currentStep === 3) {
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date().toISOString().split("T")[0];
 
     return (
       <div className="booking-page">
@@ -321,7 +365,7 @@ const BookPickupPage = () => {
             <h1>Schedule Pickup</h1>
             <p>Step 3 of 4: Date & Time</p>
             <div className="progress-bar">
-              <div className="progress-fill" style={{width: '75%'}}></div>
+              <div className="progress-fill" style={{ width: "75%" }}></div>
             </div>
           </div>
 
@@ -335,7 +379,9 @@ const BookPickupPage = () => {
                 className="text-input"
                 min={today}
                 value={formData.pickupDate}
-                onChange={(e) => setFormData({...formData, pickupDate: e.target.value})}
+                onChange={(e) =>
+                  setFormData({ ...formData, pickupDate: e.target.value })
+                }
               />
             </div>
 
@@ -345,17 +391,16 @@ const BookPickupPage = () => {
                 {timeSlots.map((slot, idx) => (
                   <label
                     key={idx}
-                    className={`time-slot-card ${formData.timeSlot === slot.value ? 'selected' : ''}`}
+                    className={`time-slot-card ${formData.timeSlot === slot.value ? "selected" : ""}`}
                   >
-              
-            
-
                     <input
                       type="radio"
                       name="timeSlot"
                       value={slot.value}
                       checked={formData.timeSlot === slot.value}
-                      onChange={(e) => setFormData({...formData, timeSlot: e.target.value})}
+                      onChange={(e) =>
+                        setFormData({ ...formData, timeSlot: e.target.value })
+                      }
                     />
                     <Clock size={20} />
                     <span>{slot.label}</span>
@@ -371,13 +416,19 @@ const BookPickupPage = () => {
                 className="text-input"
                 rows="3"
                 value={formData.additionalNotes}
-                onChange={(e) => setFormData({...formData, additionalNotes: e.target.value})}
+                onChange={(e) =>
+                  setFormData({ ...formData, additionalNotes: e.target.value })
+                }
               />
             </div>
 
             <div className="button-group">
-              <button onClick={handleBack} className="btn-back">← Back</button>
-              <button onClick={handleNext} className="btn-next">Review Booking →</button> 
+              <button onClick={handleBack} className="btn-back">
+                ← Back
+              </button>
+              <button onClick={handleNext} className="btn-next">
+                Review Booking →
+              </button>
             </div>
           </div>
         </div>
@@ -385,7 +436,7 @@ const BookPickupPage = () => {
     );
   }
 
-  // Step 4: Review & Confirm 
+  // Step 4: Review & Confirm
   if (currentStep === 4) {
     return (
       <div className="booking-page">
@@ -395,7 +446,7 @@ const BookPickupPage = () => {
             <h1>Review Your Booking</h1>
             <p>Step 4 of 4: Confirm Details</p>
             <div className="progress-bar">
-              <div className="progress-fill" style={{width: '100%'}}></div>
+              <div className="progress-fill" style={{ width: "100%" }}></div>
             </div>
           </div>
 
@@ -420,18 +471,24 @@ const BookPickupPage = () => {
               <h3>📍 Pickup Address</h3>
               <p>{formData.address}</p>
               <p>{formData.landmark && `Landmark: ${formData.landmark}`}</p>
-              <p>{formData.city}, {formData.pincode}</p>
+              <p>
+                {formData.city}, {formData.pincode}
+              </p>
             </div>
 
             <div className="review-card">
               <h3>📅 Schedule</h3>
               <div className="review-item">
                 <span>Date:</span>
-                <strong>{new Date(formData.pickupDate).toLocaleDateString()}</strong>
+                <strong>
+                  {new Date(formData.pickupDate).toLocaleDateString()}
+                </strong>
               </div>
               <div className="review-item">
                 <span>Time:</span>
-                <strong>{timeSlots.find(s => s.value === formData.timeSlot)?.label}</strong>
+                <strong>
+                  {timeSlots.find((s) => s.value === formData.timeSlot)?.label}
+                </strong>
               </div>
             </div>
 
@@ -444,7 +501,9 @@ const BookPickupPage = () => {
           </div>
 
           <div className="button-group">
-            <button onClick={handleBack} className="btn-back">← Back</button>
+            <button onClick={handleBack} className="btn-back">
+              ← Back
+            </button>
             <button onClick={handleSubmit} className="btn-confirm">
               Confirm Booking ✓
             </button>
@@ -455,7 +514,7 @@ const BookPickupPage = () => {
   }
 
   // Step 5: Success
- /* if (currentStep === 5) {
+  /* if (currentStep === 5) {
     return (
       <div className="booking-page">
         <div className="booking-container success-container">
@@ -504,106 +563,106 @@ const BookPickupPage = () => {
     );
   }*/
 
-
-if (currentStep === 5) {
-  return (
-    <div className="booking-page">
-      <div className="booking-container success-container">
-        <div className="success-icon">
-          <CheckCircle size={80} />
-        </div>
-        <h1 className="success-title">Booking Confirmed!</h1>
-        <p className="success-subtitle">Your scrap pickup has been scheduled successfully</p>
-
-        <div className="booking-id-card">
-          <h3>Booking ID</h3>
-          <p className="booking-id">{bookingId}</p>
-          <small>Save this ID for tracking your pickup</small>
-        </div>
-
-        <div className="success-details">
-          <div className="detail-item">
-            <Calendar size={20} />
-            <span>{new Date(formData.pickupDate).toLocaleDateString()}</span>
+  if (currentStep === 5) {
+    return (
+      <div className="booking-page">
+        <div className="booking-container success-container">
+          <div className="success-icon">
+            <CheckCircle size={80} />
           </div>
-          <div className="detail-item">
-            <Clock size={20} />
-            <span>{timeSlots.find(s => s.value === formData.timeSlot)?.label}</span>
+          <h1 className="success-title">Booking Confirmed!</h1>
+          <p className="success-subtitle">
+            Your scrap pickup has been scheduled successfully
+          </p>
+
+          <div className="booking-id-card">
+            <h3>Booking ID</h3>
+            <p className="booking-id">{bookingId}</p>
+            <small>Save this ID for tracking your pickup</small>
           </div>
-          <div className="detail-item">
-            <DollarSign size={20} />
-            <span>₹{estimatedPrice} (estimated)</span>
+
+          <div className="success-details">
+            <div className="detail-item">
+              <Calendar size={20} />
+              <span>{new Date(formData.pickupDate).toLocaleDateString()}</span>
+            </div>
+            <div className="detail-item">
+              <Clock size={20} />
+              <span>
+                {timeSlots.find((s) => s.value === formData.timeSlot)?.label}
+              </span>
+            </div>
+            <div className="detail-item">
+              <DollarSign size={20} />
+              <span>₹{estimatedPrice} (estimated)</span>
+            </div>
           </div>
-        </div>
 
-        <div className="success-info">
-          <h4>What's Next?</h4>
-          <ul>
-            <li>✓ A vendor will be assigned to your booking</li>
-            <li>✓ You'll receive a confirmation email</li>
-            <li>✓ Vendor will arrive at scheduled time</li>
-            <li>✓ Payment after pickup completion</li>
-          </ul>
-        </div>
+          <div className="success-info">
+            <h4>What's Next?</h4>
+            <ul>
+              <li>✓ A vendor will be assigned to your booking</li>
+              <li>✓ You'll receive a confirmation email</li>
+              <li>✓ Vendor will arrive at scheduled time</li>
+              <li>✓ Payment after pickup completion</li>
+            </ul>
+          </div>
 
-        {/* ✅ NEW: Dashboard Navigation Buttons */}
-        <div className="success-actions">
-          <button 
-            onClick={() => {
-              if (user?.role === 'vendor') {
-                navigate('/vendor-dashboard');
-              } else {
-                navigate('/dashboard');
-              }
-            }} 
-            className="btn-dashboard"
-          >
-            📊 Go to Dashboard
-          </button>
+          {/* ✅ NEW: Dashboard Navigation Buttons */}
+          <div className="success-actions">
+            <button
+              onClick={() => {
+                if (user?.role === "vendor") {
+                  navigate("/vendor-dashboard");
+                } else {
+                  navigate("/dashboard");
+                }
+              }}
+              className="btn-dashboard"
+            >
+              📊 Go to Dashboard
+            </button>
 
-          <button 
-            onClick={() => {
-              setCurrentStep(1);
-              setFormData({
-                scrapType: '',
-                quantity: '',
-                scrapImage: null,
-                address: '',
-                city: '',
-                pincode: '',
-                landmark: '',
-                pickupDate: '',
-                timeSlot: '',
-                additionalNotes: ''
-              });
-              setEstimatedPrice(null);
-              setBookingId(null);
-              setError('');
-            }} 
-            className="btn-new-booking"
-          >
-            📦 Book Another Pickup
-          </button>
+            <button
+              onClick={() => {
+                setCurrentStep(1);
+                setFormData({
+                  scrapType: "",
+                  quantity: "",
+                  scrapImage: null,
+                  address: "",
+                  city: "",
+                  pincode: "",
+                  landmark: "",
+                  pickupDate: "",
+                  timeSlot: "",
+                  additionalNotes: "",
+                });
+                setEstimatedPrice(null);
+                setBookingId(null);
+                setError("");
+              }}
+              className="btn-new-booking"
+            >
+              📦 Book Another Pickup
+            </button>
 
-          <button 
-            onClick={() => navigate('/')} 
-            className="btn-home-link"
-          >
-            🏠 Back to Home
-          </button>
-        </div>
+            <button onClick={() => navigate("/")} className="btn-home-link">
+              🏠 Back to Home
+            </button>
+          </div>
 
-        {/* ❌ REMOVE THIS OLD BUTTON IF IT EXISTS */}
-        {/* <button onClick={() => navigate('/')} className="btn-home">
+          {/* ❌ REMOVE THIS OLD BUTTON IF IT EXISTS */}
+          {/* <button onClick={() => navigate('/')} className="btn-home">
           Back to Home
         </button> */}
-
+        </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
 
   return null;
 };
 
 export default BookPickupPage;
+

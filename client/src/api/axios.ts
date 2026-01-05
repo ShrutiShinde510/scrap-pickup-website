@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://127.0.0.1:8000/api/",
+  baseURL: import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api/",
 });
 
 api.interceptors.request.use(
@@ -21,6 +21,10 @@ api.interceptors.response.use(
     const originalRequest = error.config;
 
     if (error.response?.status === 401 && !originalRequest._retry) {
+      // Don't retry/redirect for login failures
+      if (originalRequest.url?.includes("login/")) {
+        return Promise.reject(error);
+      }
       originalRequest._retry = true;
 
       try {

@@ -75,6 +75,13 @@ class PickupRequest(models.Model):
     time_slot = models.CharField(max_length=50)
     scrape_image = models.ImageField(upload_to="pickup_images/", blank=True, null=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
+    assigned_to = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="assigned_pickups",
+    )
 
     # contact & verification
     contact_name = models.CharField(max_length=150, blank=True)
