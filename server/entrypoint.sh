@@ -1,7 +1,11 @@
 #!/bin/sh
 
-# Wait for postgres if needed (optional, but good practice if not using depends_on condition)
-# But for now, just migrations and start
+# Wait for postgres to be ready
+echo "Waiting for PostgreSQL to start..."
+while ! nc -z $DATABASE_HOST $DATABASE_PORT; do
+  sleep 0.1
+done
+echo "PostgreSQL started"
 
 echo "Collecting static files..."
 python manage.py collectstatic --noinput
