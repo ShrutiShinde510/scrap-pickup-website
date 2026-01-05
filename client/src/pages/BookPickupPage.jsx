@@ -613,7 +613,6 @@ const BookPickupPage = () => {
             </ul>
           </div>
 
-          {/* ✅ NEW: Dashboard Navigation Buttons */}
           <div className="success-actions">
             <button
               onClick={() => {
@@ -657,10 +656,6 @@ const BookPickupPage = () => {
             </button>
           </div>
 
-          {/* ❌ REMOVE THIS OLD BUTTON IF IT EXISTS */}
-          {/* <button onClick={() => navigate('/')} className="btn-home">
-          Back to Home
-        </button> */}
         </div>
       </div>
     );

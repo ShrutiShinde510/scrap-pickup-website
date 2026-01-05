@@ -1,9 +1,11 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import "./HeroSection.css";
 
 const HeroSection = ({ onRegisterClick }) => {
   const navigate = useNavigate();
+  const { isAuthenticated, user } = useAuth();
 
   return (
     <section className="hero-section">
@@ -19,6 +21,16 @@ const HeroSection = ({ onRegisterClick }) => {
           >
             Book Pickup Now
           </button>
+
+          {isAuthenticated && (
+            <button
+              onClick={() => navigate(user?.role === "vendor" ? "/vendor-dashboard" : "/dashboard")}
+              className="btn-primary"
+              style={{ marginLeft: "1rem", backgroundColor: "#fff", color: "#10b981" }}
+            >
+              Go to Dashboard
+            </button>
+          )}
         </div>
       </div>
     </section>

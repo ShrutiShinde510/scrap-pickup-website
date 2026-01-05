@@ -155,6 +155,7 @@ class PickupRequestSerializer(serializers.ModelSerializer):
             "time_slot",
             "scrape_image",
             "status",
+            "contact_name",
             "contact_phone",
             "is_phone_verified",
             "scrap_type",
