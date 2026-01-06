@@ -1,4 +1,3 @@
-
 .hero-section {
   background: linear-gradient(135deg, #059669 0%, #10b981 100%);
   color: white;
@@ -33,18 +32,24 @@
 
 .btn-primary {
   background: white;
-  color: #059669;
+  color: #10b981;
   padding: 15px 35px;
   border-radius: 10px;
   font-weight: bold;
   font-size: 18px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   transition: all 0.3s;
+  width: 280px !important;
+  height: 54px;
+  text-align: center;
+  justify-content: center;
+  display: flex !important;
+  align-items: center;
 }
 
 .btn-primary:hover {
   transform: translateY(-3px);
-  box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
 }
 
 .btn-secondary {
@@ -54,14 +59,20 @@
   border-radius: 10px;
   font-weight: bold;
   font-size: 18px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   transition: all 0.3s;
+  width: 280px !important;
+  height: 54px;
+  text-align: center;
+  justify-content: center;
+  display: flex !important;
+  align-items: center;
 }
 
 .btn-secondary:hover {
   background: #f59e0b;
   transform: translateY(-3px);
-  box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
 }
 
 @media (max-width: 768px) {
@@ -78,7 +89,8 @@
     align-items: center;
   }
 
-  .btn-primary, .btn-secondary {
+  .btn-primary,
+  .btn-secondary {
     width: 100%;
     max-width: 300px;
   }

@@ -142,7 +142,10 @@ const BookPickupPage = () => {
       if (estimatedPrice) {
         payload.append("estimated_price", estimatedPrice);
       }
-      payload.append("address", formData.address); // Combine address parts if needed or send as is
+      payload.append("address", formData.address);
+      payload.append("city", formData.city);
+      payload.append("pincode", formData.pincode);
+      payload.append("landmark", formData.landmark);
       payload.append("latitude", 0); // Placeholder if not using maps yet
       payload.append("longitude", 0); // Placeholder
       payload.append("date", formData.pickupDate);
@@ -173,7 +176,7 @@ const BookPickupPage = () => {
         <div className="booking-container">
           <div className="booking-header">
             <Package size={40} className="header-icon" />
-            <h1>book now Scrap Pickup</h1>
+            <h1>Book Scrap Pickup</h1>
             <p>Step 1 of 4: Scrap Details</p>
             <div className="progress-bar">
               <div className="progress-fill" style={{ width: "25%" }}></div>

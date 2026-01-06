@@ -13,6 +13,8 @@ import {
   Trash2,
   Edit,
   Eye,
+  Navigation,
+  Phone,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import api from "../api/axios";
@@ -29,6 +31,7 @@ const ClientDashboard = () => {
     totalEarnings: 0,
   });
   const [activeTab, setActiveTab] = useState("overview"); // overview, bookings, profile
+  const [selectedBooking, setSelectedBooking] = useState(null);
 
   useEffect(() => {
     if (!user) {
@@ -107,6 +110,144 @@ const ClientDashboard = () => {
       alert("Failed to cancel booking");
     }
   };
+
+
+  // NEW: Open Google Maps with vendor location
+  const openVendorLocation = (booking) => {
+    // Mock vendor location - In real app, this comes from backend
+    const vendorLat = booking.vendor_latitude || 18.5204;
+    const vendorLng = booking.vendor_longitude || 73.8567;
+
+    window.open(`https://www.google.com/maps?q=${vendorLat},${vendorLng}`, '_blank');
+  };
+
+  // NEW: Render Location Tracking Modal
+  const renderLocationModal = () => {
+    if (!selectedBooking) return null;
+
+    const vendorInfo = {
+      name: selectedBooking.vendor_name || "Vendor",
+      phone: selectedBooking.vendor_phone || "+91 98765 43210",
+      latitude: selectedBooking.vendor_latitude || 18.5204,
+      longitude: selectedBooking.vendor_longitude || 73.8567,
+      distance: "2.5 km away",
+      eta: "12 minutes"
+    };
+
+    return (
+      <div className="location-modal-overlay" onClick={() => setSelectedBooking(null)}>
+        <div className="location-modal" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-header">
+            <h2>📍 Track Vendor Location</h2>
+            <button
+              className="modal-close"
+              onClick={() => setSelectedBooking(null)}
+            >
+              ✕
+            </button>
+          </div>
+
+          <div className="modal-body">
+            {/* Booking Info */}
+            <div className="modal-section">
+              <h3>Booking Details</h3>
+              <div className="modal-info-grid">
+                <div className="modal-info-item">
+                  <span className="modal-label">Booking ID:</span>
+                  <span className="modal-value">{selectedBooking.id}</span>
+                </div>
+                <div className="modal-info-item">
+                  <span className="modal-label">Status:</span>
+                  <span className="modal-value">{getStatusBadge(selectedBooking.status)}</span>
+                </div>
+                <div className="modal-info-item">
+                  <span className="modal-label">Scrap Type:</span>
+                  <span className="modal-value">{selectedBooking.scrap_type}</span>
+                </div>
+                <div className="modal-info-item">
+                  <span className="modal-label">Quantity:</span>
+                  <span className="modal-value">{selectedBooking.quantity} kg</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Vendor Location */}
+            <div className="modal-section">
+              <h3>Vendor Information</h3>
+              {selectedBooking.status === 'pending' ? (
+                <div className="vendor-pending">
+                  <Clock size={48} style={{ color: '#fbbf24', marginBottom: '12px' }} />
+                  <p>Vendor not assigned yet</p>
+                  <small>You'll be able to track vendor once assigned</small>
+                </div>
+              ) : (
+                <>
+                  <div className="vendor-location-card">
+                    <div className="vendor-icon">
+                      <MapPin size={32} />
+                    </div>
+                    <div className="vendor-details">
+                      <h4>{vendorInfo.name}</h4>
+                      <p className="vendor-distance">{vendorInfo.distance}</p>
+                      <p className="vendor-eta">⏱️ ETA: {vendorInfo.eta}</p>
+                      <p className="vendor-coords">
+                        📍 {vendorInfo.latitude.toFixed(4)}°, {vendorInfo.longitude.toFixed(4)}°
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="modal-actions">
+                    <button
+                      className="btn-track-maps"
+                      onClick={() => openVendorLocation(selectedBooking)}
+                    >
+                      <Navigation size={18} />
+                      Open in Google Maps
+                    </button>
+                    <button
+                      className="btn-call-vendor"
+                      onClick={() => window.open(`tel:${vendorInfo.phone}`)}
+                    >
+                      <Phone size={18} />
+                      Call Vendor
+                    </button>
+                  </div>
+
+                  {/* Live Tracking Info */}
+                  {selectedBooking.status === 'in_progress' && (
+                    <div className="tracking-active">
+                      <div className="tracking-pulse"></div>
+                      <p>🔴 Live tracking active</p>
+                      <small>Vendor is on the way to your location</small>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
+            {/* Your Pickup Location */}
+            <div className="modal-section">
+              <h3>Your Pickup Location</h3>
+              <div className="pickup-location-card">
+                <MapPin size={20} style={{ color: '#059669' }} />
+                <div>
+                  <p className="pickup-address">{selectedBooking.address}</p>
+                  {selectedBooking.landmark && <p className="pickup-landmark">Landmark: {selectedBooking.landmark}</p>}
+                  <p className="pickup-city">{selectedBooking.city}, {selectedBooking.pincode}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+
+
+
+
 
   // Overview Tab
   const renderOverview = () => (
@@ -289,6 +430,18 @@ const ClientDashboard = () => {
               </div>
 
               <div className="booking-actions">
+
+                <button
+                  className="btn-track"
+                  onClick={() => setSelectedBooking(booking)}
+                >
+                  <MapPin size={16} />
+                  {booking.status === 'pending' ? 'View Details' : 'Track Vendor'}
+                </button>
+
+
+
+
                 {booking.status === "pending" && (
                   <button
                     className="btn-cancel"
@@ -448,6 +601,8 @@ const ClientDashboard = () => {
           </div>
         </main>
       </div>
+      {/* NEW: Location Tracking Modal */}
+      {renderLocationModal()}
     </div>
   );
 };

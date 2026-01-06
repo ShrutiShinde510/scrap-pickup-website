@@ -26,9 +26,8 @@ const HeroSection = ({ onRegisterClick }) => {
             <button
               onClick={() => navigate(user?.role === "vendor" ? "/vendor-dashboard" : "/dashboard")}
               className="btn-primary"
-              style={{ marginLeft: "1rem", backgroundColor: "#fff", color: "#10b981" }}
             >
-              Go to Dashboard
+              Client Dashboard
             </button>
           )}
         </div>
