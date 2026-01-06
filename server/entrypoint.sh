@@ -7,13 +7,17 @@ while ! python -c "import socket, os; s = socket.socket(socket.AF_INET, socket.S
 done
 echo "PostgreSQL started"
 
-echo "Collecting static files..."
-python manage.py collectstatic --noinput
-
 echo "Applying database migrations..."
-python manage.py makemigrations
 python manage.py migrate
 
 echo "Starting server..."
-# Using exec to replace shell with gunicorn process
-exec gunicorn core.wsgi:application --bind 0.0.0.0:8000
+if [ "$DEBUG" = "1" ]; then
+    echo "Running in DEBUG mode with hot reloading..."
+    exec python manage.py runserver 0.0.0.0:8000
+else
+    echo "Running in PRODUCTION mode..."
+    echo "Collecting static files..."
+    python manage.py collectstatic --noinput
+    # Using exec to replace shell with gunicorn process
+    exec gunicorn core.wsgi:application --bind 0.0.0.0:8000
+fi

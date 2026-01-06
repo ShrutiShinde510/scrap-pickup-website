@@ -1,0 +1,14 @@
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+env
+venv
+.env
+.venv
+Pipfile.lock
+db.sqlite3
+.git
+.gitignore
+.DS_Store
