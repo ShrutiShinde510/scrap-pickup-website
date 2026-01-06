@@ -14,6 +14,9 @@ import {
     Navigation,
     Phone,
     CheckSquare,
+    Star,
+    Filter,
+    History,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import api from "../api/axios";
@@ -40,6 +43,8 @@ const VendorDashboard = () => {
     ];
 
     const [bookings, setBookings] = useState([]);
+    const [allBookings, setAllBookings] = useState([]);
+    const [bookingFilter, setBookingFilter] = useState("all");
     const [stats, setStats] = useState({
         totalAssigned: 0,
         pendingPickups: 0,
@@ -159,7 +164,103 @@ const VendorDashboard = () => {
                     city: "Pune",
                     pincode: "411045",
                     client_latitude: 18.5598,
-                    client_longitude: 73.7752
+                    client_longitude: 73.7752,
+                    review: {
+                        rating: 5,
+                        comment: "Excellent service! Very professional and punctual."
+                    }
+                },
+                {
+                    id: "BK004",
+                    client_name: "Sneha Desai",
+                    client_phone: "+91 65432 10987",
+                    scrap_type: "Plastic",
+                    quantity: 30,
+                    estimated_price: 600,
+                    date: new Date(Date.now() - 172800000).toISOString(),
+                    status: "completed",
+                    address: "321 Aundh Road, Aundh",
+                    landmark: "Near Aundh IT Park",
+                    city: "Pune",
+                    pincode: "411007",
+                    client_latitude: 18.5579,
+                    client_longitude: 73.8094,
+                    review: {
+                        rating: 4,
+                        comment: "Good service, came on time."
+                    }
+                },
+                {
+                    id: "BK005",
+                    client_name: "Vikram Singh",
+                    client_phone: "+91 54321 09876",
+                    scrap_type: "Paper",
+                    quantity: 50,
+                    estimated_price: 1000,
+                    date: new Date(Date.now() - 259200000).toISOString(),
+                    status: "completed",
+                    address: "567 Hinjewadi Phase 1",
+                    landmark: "Near Rajiv Gandhi Infotech Park",
+                    city: "Pune",
+                    pincode: "411057",
+                    client_latitude: 18.5912,
+                    client_longitude: 73.7389,
+                    review: {
+                        rating: 5,
+                        comment: "Very satisfied with the service!"
+                    }
+                },
+                {
+                    id: "BK006",
+                    client_name: "Meera Iyer",
+                    client_phone: "+91 43210 98765",
+                    scrap_type: "Metal",
+                    quantity: 20,
+                    estimated_price: 600,
+                    date: new Date(Date.now() - 345600000).toISOString(),
+                    status: "cancelled",
+                    address: "890 Kothrud, Karve Road",
+                    landmark: "Near Kothrud Depot",
+                    city: "Pune",
+                    pincode: "411038",
+                    client_latitude: 18.5074,
+                    client_longitude: 73.8077
+                },
+                {
+                    id: "BK007",
+                    client_name: "Arjun Reddy",
+                    client_phone: "+91 32109 87654",
+                    scrap_type: "Plastic",
+                    quantity: 35,
+                    estimated_price: 700,
+                    date: new Date(Date.now() - 432000000).toISOString(),
+                    status: "completed",
+                    address: "234 Viman Nagar, Airport Road",
+                    landmark: "Near Phoenix Market City",
+                    city: "Pune",
+                    pincode: "411014",
+                    client_latitude: 18.5679,
+                    client_longitude: 73.9143
+                },
+                {
+                    id: "BK008",
+                    client_name: "Kavita Joshi",
+                    client_phone: "+91 21098 76543",
+                    scrap_type: "Paper",
+                    quantity: 45,
+                    estimated_price: 900,
+                    date: new Date(Date.now() - 518400000).toISOString(),
+                    status: "completed",
+                    address: "678 Hadapsar, Magarpatta Road",
+                    landmark: "Near Magarpatta City",
+                    city: "Pune",
+                    pincode: "411028",
+                    client_latitude: 18.5196,
+                    client_longitude: 73.9346,
+                    review: {
+                        rating: 3,
+                        comment: "Service was okay, could be better."
+                    }
                 }
             ];
 
@@ -169,6 +270,7 @@ const VendorDashboard = () => {
             );
 
             setBookings(filteredBookings);
+            setAllBookings(filteredBookings); // Store all bookings for history
 
             const stats = {
                 totalAssigned: filteredBookings.length,
@@ -737,6 +839,194 @@ const VendorDashboard = () => {
         </div>
     );
 
+    // All Bookings Tab with Filters
+    const renderAllBookings = () => {
+        const getFilteredBookings = () => {
+            switch (bookingFilter) {
+                case "completed":
+                    return allBookings.filter(b => b.status === "completed");
+                case "reviewed":
+                    return allBookings.filter(b => b.status === "completed" && b.review);
+                case "pending":
+                    return allBookings.filter(b => b.status === "assigned" || b.status === "in_progress");
+                case "cancelled":
+                    return allBookings.filter(b => b.status === "cancelled");
+                default:
+                    return allBookings;
+            }
+        };
+
+        const filteredBookings = getFilteredBookings();
+        const completedCount = allBookings.filter(b => b.status === "completed").length;
+        const reviewedCount = allBookings.filter(b => b.status === "completed" && b.review).length;
+        const pendingCount = allBookings.filter(b => b.status === "assigned" || b.status === "in_progress").length;
+        const cancelledCount = allBookings.filter(b => b.status === "cancelled").length;
+
+        return (
+            <div className="all-bookings-section">
+                {/* Filter Tabs */}
+                <div className="filter-tabs">
+                    <button
+                        className={`filter-tab ${bookingFilter === "all" ? "active" : ""}`}
+                        onClick={() => setBookingFilter("all")}
+                    >
+                        <History size={18} />
+                        All Bookings
+                        <span className="filter-count">{allBookings.length}</span>
+                    </button>
+                    <button
+                        className={`filter-tab ${bookingFilter === "completed" ? "active" : ""}`}
+                        onClick={() => setBookingFilter("completed")}
+                    >
+                        <CheckCircle size={18} />
+                        Completed
+                        <span className="filter-count">{completedCount}</span>
+                    </button>
+                    <button
+                        className={`filter-tab ${bookingFilter === "reviewed" ? "active" : ""}`}
+                        onClick={() => setBookingFilter("reviewed")}
+                    >
+                        <Star size={18} />
+                        Reviewed
+                        <span className="filter-count">{reviewedCount}</span>
+                    </button>
+                    <button
+                        className={`filter-tab ${bookingFilter === "pending" ? "active" : ""}`}
+                        onClick={() => setBookingFilter("pending")}
+                    >
+                        <Clock size={18} />
+                        Pending
+                        <span className="filter-count">{pendingCount}</span>
+                    </button>
+                    <button
+                        className={`filter-tab ${bookingFilter === "cancelled" ? "active" : ""}`}
+                        onClick={() => setBookingFilter("cancelled")}
+                    >
+                        <XCircle size={18} />
+                        Cancelled
+                        <span className="filter-count">{cancelledCount}</span>
+                    </button>
+                </div>
+
+                {/* Bookings List */}
+                <div className="bookings-history-grid">
+                    {filteredBookings.map((booking) => (
+                        <div key={booking.id} className="booking-history-card">
+                            <div className="booking-card-header">
+                                <div>
+                                    <h3>{booking.id}</h3>
+                                    <p className="booking-date">
+                                        {new Date(booking.date).toLocaleDateString('en-IN', {
+                                            day: 'numeric',
+                                            month: 'short',
+                                            year: 'numeric'
+                                        })}
+                                    </p>
+                                </div>
+                                {getStatusBadge(booking.status)}
+                            </div>
+
+                            <div className="booking-card-body">
+                                <div className="booking-info">
+                                    <div className="info-item">
+                                        <User size={18} />
+                                        <div>
+                                            <span className="label">Client</span>
+                                            <span className="value">{booking.client_name}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="info-item">
+                                        <Package size={18} />
+                                        <div>
+                                            <span className="label">Scrap Type</span>
+                                            <span className="value">{booking.scrap_type}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="info-item">
+                                        <TrendingUp size={18} />
+                                        <div>
+                                            <span className="label">Quantity</span>
+                                            <span className="value">{booking.quantity} kg</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="info-item">
+                                        <DollarSign size={18} />
+                                        <div>
+                                            <span className="label">Price</span>
+                                            <span className="value" style={{ color: "#059669", fontWeight: "700" }}>₹{booking.estimated_price}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="info-item">
+                                        <MapPin size={18} />
+                                        <div>
+                                            <span className="label">Location</span>
+                                            <span className="value">{booking.city}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Review Section */}
+                                {booking.review && (
+                                    <div className="booking-review">
+                                        <div className="review-header">
+                                            <Star size={16} style={{ color: "#fbbf24", fill: "#fbbf24" }} />
+                                            <span className="review-rating">
+                                                {booking.review.rating}/5
+                                            </span>
+                                        </div>
+                                        <p className="review-comment">"{booking.review.comment}"</p>
+                                    </div>
+                                )}
+
+                                <div className="booking-actions">
+                                    <button
+                                        className="btn-track"
+                                        onClick={() => setSelectedBooking(booking)}
+                                    >
+                                        <MapPin size={16} />
+                                        View Details
+                                    </button>
+
+                                    {booking.status === "assigned" && (
+                                        <button
+                                            className="btn-accept"
+                                            onClick={() => handleAcceptBooking(booking.id)}
+                                        >
+                                            <CheckCircle size={16} />
+                                            Accept
+                                        </button>
+                                    )}
+
+                                    {booking.status === "in_progress" && (
+                                        <button
+                                            className="btn-complete"
+                                            onClick={() => handleCompleteBooking(booking.id)}
+                                        >
+                                            <CheckCircle size={16} />
+                                            Complete
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                {filteredBookings.length === 0 && (
+                    <div className="empty-state">
+                        <Filter size={64} style={{ color: "#d1d5db", marginBottom: "20px" }} />
+                        <h3>No Bookings Found</h3>
+                        <p>No bookings match the selected filter</p>
+                    </div>
+                )}
+            </div>
+        );
+    };
+
     return (
         <div className="dashboard-page">
             <div className="dashboard-container">
@@ -762,6 +1052,13 @@ const VendorDashboard = () => {
                             My Pickups
                         </button>
                         <button
+                            className={`nav-item ${activeTab === "allBookings" ? "active" : ""}`}
+                            onClick={() => setActiveTab("allBookings")}
+                        >
+                            <History size={20} />
+                            All Bookings
+                        </button>
+                        <button
                             className={`nav-item ${activeTab === "profile" ? "active" : ""}`}
                             onClick={() => setActiveTab("profile")}
                         >
@@ -779,7 +1076,9 @@ const VendorDashboard = () => {
                                     ? "Dashboard Overview"
                                     : activeTab === "bookings"
                                         ? "My Pickups"
-                                        : "Profile"}
+                                        : activeTab === "allBookings"
+                                            ? "All Bookings"
+                                            : "Profile"}
                             </h1>
                             <p>Manage your scrap pickups and track earnings</p>
                         </div>
@@ -788,6 +1087,7 @@ const VendorDashboard = () => {
                     <div className="dashboard-content">
                         {activeTab === "overview" && renderOverview()}
                         {activeTab === "bookings" && renderBookings()}
+                        {activeTab === "allBookings" && renderAllBookings()}
                         {activeTab === "profile" && renderProfile()}
                     </div>
                 </main>
