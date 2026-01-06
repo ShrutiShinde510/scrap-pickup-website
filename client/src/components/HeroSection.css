@@ -1,4 +1,4 @@
-.hero-section {
+/*.hero-section {
   background: linear-gradient(135deg, #059669 0%, #10b981 100%);
   color: white;
   padding: 80px 20px;
@@ -25,9 +25,10 @@
 
 .hero-buttons {
   display: flex;
-  gap: 20px;
+  gap: 16px;
   justify-content: center;
   flex-wrap: wrap;
+  align-items: center;
 }
 
 .btn-primary {
@@ -93,5 +94,160 @@
   .btn-secondary {
     width: 100%;
     max-width: 300px;
+  }
+}
+
+*/
+
+.hero-section {
+  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+  color: white;
+  padding: 80px 20px;
+  text-align: center;
+}
+
+.hero-container {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.hero-title {
+  font-size: 48px;
+  font-weight: bold;
+  margin-bottom: 20px;
+  line-height: 1.2;
+}
+
+.hero-subtitle {
+  font-size: 22px;
+  margin-bottom: 40px;
+  opacity: 0.95;
+}
+
+.hero-buttons {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* Book Pickup Button */
+.btn-book-pickup {
+  background: #fbbf24;
+  color: #065f46;
+  padding: 15px 35px;
+  border-radius: 10px;
+  font-weight: bold;
+  font-size: 18px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s;
+  border: none;
+  cursor: pointer;
+  min-width: 240px;
+  height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-book-pickup:hover {
+  background: #f59e0b;
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Client Dashboard Button */
+.btn-client-dashboard {
+  background: white;
+  color: #059669;
+  padding: 15px 30px;
+  border-radius: 10px;
+  font-weight: bold;
+  font-size: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s;
+  border: none;
+  cursor: pointer;
+  min-width: 220px;
+  height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-client-dashboard:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+  background: #f0fdf4;
+}
+
+/* Vendor Dashboard Button */
+.btn-vendor-dashboard {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 15px 30px;
+  border-radius: 10px;
+  font-weight: bold;
+  font-size: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s;
+  border: none;
+  cursor: pointer;
+  min-width: 220px;
+  height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-vendor-dashboard:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+  background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .hero-title {
+    font-size: 32px;
+  }
+
+  .hero-subtitle {
+    font-size: 18px;
+  }
+
+  .hero-buttons {
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .btn-book-pickup,
+  .btn-client-dashboard,
+  .btn-vendor-dashboard {
+    width: 100%;
+    max-width: 320px;
+    min-width: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-title {
+    font-size: 28px;
+  }
+
+  .hero-subtitle {
+    font-size: 16px;
+  }
+
+  .btn-book-pickup,
+  .btn-client-dashboard,
+  .btn-vendor-dashboard {
+    font-size: 15px;
+    padding: 14px 25px;
+    height: 50px;
   }
 }

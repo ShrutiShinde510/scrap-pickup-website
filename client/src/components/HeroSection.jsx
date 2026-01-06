@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { LayoutDashboard, Truck } from "lucide-react";
 import "./HeroSection.css";
 
 const HeroSection = ({ onRegisterClick }) => {
@@ -23,12 +24,35 @@ const HeroSection = ({ onRegisterClick }) => {
           </button>
 
           {isAuthenticated && (
-            <button
-              onClick={() => navigate(user?.role === "vendor" ? "/vendor-dashboard" : "/dashboard")}
-              className="btn-primary"
-            >
-              Client Dashboard
-            </button>
+            /* <button
+               onClick={() => navigate(user?.role === "vendor" ? "/vendor-dashboard" : "/dashboard")}
+               className="btn-primary"
+             >
+               Client Dashboard
+             </button>
+             */
+
+
+            <>
+              <button
+                onClick={() => navigate("/dashboard")}
+                className="btn-client-dashboard"
+              >
+                <LayoutDashboard size={20} />
+                Client Dashboard
+              </button>
+
+              <button
+                onClick={() => navigate("/vendor-dashboard")}
+                className="btn-vendor-dashboard"
+              >
+                <Truck size={20} />
+                Vendor Dashboard
+              </button>
+            </>
+
+
+
           )}
         </div>
       </div>

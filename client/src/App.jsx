@@ -12,6 +12,7 @@ import VerifyEmailPage from "./pages/VerifyEmailPage";
 import BookPickupPage from "./pages/BookPickupPage";
 import VendorRegistrationPage from "./pages/VendorRegistrationPage";
 import ClientDashboard from './pages/ClientDashboard';
+import VendorDashboard from "./pages/VendorDashboard";
 
 import "./App.css";
 import ClientRegistrationModal from "./components/ClientRegistrationModal";
@@ -86,6 +87,8 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+          <Route path="/vendor-dashboard" element={<VendorDashboard />} />
 
           {/* Redirects */}
           <Route path="/client-registration" element={<Navigate to="/signup" />} />
