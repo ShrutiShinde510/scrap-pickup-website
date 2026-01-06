@@ -10,12 +10,11 @@ import {
   XCircle,
   MapPin,
   User,
-  Trash2,
   Edit,
-  Eye,
   Navigation,
   Phone,
 } from "lucide-react";
+import { GoogleMap, useJsApiLoader, Marker } from "@react-google-maps/api";
 import { useAuth } from "../context/AuthContext";
 import api from "../api/axios";
 import "./ClientDashboard.css";
@@ -111,14 +110,56 @@ const ClientDashboard = () => {
     }
   };
 
-
   // NEW: Open Google Maps with vendor location
   const openVendorLocation = (booking) => {
     // Mock vendor location - In real app, this comes from backend
     const vendorLat = booking.vendor_latitude || 18.5204;
     const vendorLng = booking.vendor_longitude || 73.8567;
 
-    window.open(`https://www.google.com/maps?q=${vendorLat},${vendorLng}`, '_blank');
+    window.open(
+      `https://www.google.com/maps?q=${vendorLat},${vendorLng}`,
+      "_blank",
+    );
+  };
+
+  // NEW: Google Maps Integration
+  const { isLoaded } = useJsApiLoader({
+    id: "google-map-script",
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
+  });
+
+  const [map, setMap] = React.useState(null);
+
+  const onLoad = React.useCallback(
+    function callback(map) {
+      // This is just an example of getting and using the map instance!!!
+      const bounds = new window.google.maps.LatLngBounds();
+      if (selectedBooking) {
+        bounds.extend({
+          lat: selectedBooking.vendor_latitude || 18.5204,
+          lng: selectedBooking.vendor_longitude || 73.8567,
+        });
+        map.fitBounds(bounds);
+      }
+      setMap(map);
+    },
+    [selectedBooking],
+  );
+
+  const onUnmount = React.useCallback(function callback(map) {
+    setMap(null);
+  }, []);
+
+  const containerStyle = {
+    width: "100%",
+    height: "300px",
+    borderRadius: "12px",
+    marginTop: "16px",
+  };
+
+  const center = {
+    lat: 18.5204,
+    lng: 73.8567,
   };
 
   // NEW: Render Location Tracking Modal
@@ -131,11 +172,19 @@ const ClientDashboard = () => {
       latitude: selectedBooking.vendor_latitude || 18.5204,
       longitude: selectedBooking.vendor_longitude || 73.8567,
       distance: "2.5 km away",
-      eta: "12 minutes"
+      eta: "12 minutes",
+    };
+
+    const mapCenter = {
+      lat: vendorInfo.latitude,
+      lng: vendorInfo.longitude,
     };
 
     return (
-      <div className="location-modal-overlay" onClick={() => setSelectedBooking(null)}>
+      <div
+        className="location-modal-overlay"
+        onClick={() => setSelectedBooking(null)}
+      >
         <div className="location-modal" onClick={(e) => e.stopPropagation()}>
           <div className="modal-header">
             <h2>📍 Track Vendor Location</h2>
@@ -158,15 +207,21 @@ const ClientDashboard = () => {
                 </div>
                 <div className="modal-info-item">
                   <span className="modal-label">Status:</span>
-                  <span className="modal-value">{getStatusBadge(selectedBooking.status)}</span>
+                  <span className="modal-value">
+                    {getStatusBadge(selectedBooking.status)}
+                  </span>
                 </div>
                 <div className="modal-info-item">
                   <span className="modal-label">Scrap Type:</span>
-                  <span className="modal-value">{selectedBooking.scrap_type}</span>
+                  <span className="modal-value">
+                    {selectedBooking.scrap_type}
+                  </span>
                 </div>
                 <div className="modal-info-item">
                   <span className="modal-label">Quantity:</span>
-                  <span className="modal-value">{selectedBooking.quantity} kg</span>
+                  <span className="modal-value">
+                    {selectedBooking.quantity} kg
+                  </span>
                 </div>
               </div>
             </div>
@@ -174,9 +229,12 @@ const ClientDashboard = () => {
             {/* Vendor Location */}
             <div className="modal-section">
               <h3>Vendor Information</h3>
-              {selectedBooking.status === 'pending' ? (
+              {selectedBooking.status === "pending" ? (
                 <div className="vendor-pending">
-                  <Clock size={48} style={{ color: '#fbbf24', marginBottom: '12px' }} />
+                  <Clock
+                    size={48}
+                    style={{ color: "#fbbf24", marginBottom: "12px" }}
+                  />
                   <p>Vendor not assigned yet</p>
                   <small>You'll be able to track vendor once assigned</small>
                 </div>
@@ -190,20 +248,32 @@ const ClientDashboard = () => {
                       <h4>{vendorInfo.name}</h4>
                       <p className="vendor-distance">{vendorInfo.distance}</p>
                       <p className="vendor-eta">⏱️ ETA: {vendorInfo.eta}</p>
-                      <p className="vendor-coords">
-                        📍 {vendorInfo.latitude.toFixed(4)}°, {vendorInfo.longitude.toFixed(4)}°
-                      </p>
                     </div>
                   </div>
 
+                  {/* Google Map */}
+                  {isLoaded ? (
+                    <GoogleMap
+                      mapContainerStyle={containerStyle}
+                      center={mapCenter}
+                      zoom={14}
+                      onLoad={onLoad}
+                      onUnmount={onUnmount}
+                    >
+                      <Marker position={mapCenter} />
+                    </GoogleMap>
+                  ) : (
+                    <div>Loading Map...</div>
+                  )}
+
                   {/* Action Buttons */}
-                  <div className="modal-actions">
+                  <div className="modal-actions" style={{ marginTop: "16px" }}>
                     <button
                       className="btn-track-maps"
                       onClick={() => openVendorLocation(selectedBooking)}
                     >
                       <Navigation size={18} />
-                      Open in Google Maps
+                      Open in Google Maps App
                     </button>
                     <button
                       className="btn-call-vendor"
@@ -213,15 +283,6 @@ const ClientDashboard = () => {
                       Call Vendor
                     </button>
                   </div>
-
-                  {/* Live Tracking Info */}
-                  {selectedBooking.status === 'in_progress' && (
-                    <div className="tracking-active">
-                      <div className="tracking-pulse"></div>
-                      <p>🔴 Live tracking active</p>
-                      <small>Vendor is on the way to your location</small>
-                    </div>
-                  )}
                 </>
               )}
             </div>
@@ -230,11 +291,17 @@ const ClientDashboard = () => {
             <div className="modal-section">
               <h3>Your Pickup Location</h3>
               <div className="pickup-location-card">
-                <MapPin size={20} style={{ color: '#059669' }} />
+                <MapPin size={20} style={{ color: "#059669" }} />
                 <div>
                   <p className="pickup-address">{selectedBooking.address}</p>
-                  {selectedBooking.landmark && <p className="pickup-landmark">Landmark: {selectedBooking.landmark}</p>}
-                  <p className="pickup-city">{selectedBooking.city}, {selectedBooking.pincode}</p>
+                  {selectedBooking.landmark && (
+                    <p className="pickup-landmark">
+                      Landmark: {selectedBooking.landmark}
+                    </p>
+                  )}
+                  <p className="pickup-city">
+                    {selectedBooking.city}, {selectedBooking.pincode}
+                  </p>
                 </div>
               </div>
             </div>
@@ -243,11 +310,6 @@ const ClientDashboard = () => {
       </div>
     );
   };
-
-
-
-
-
 
   // Overview Tab
   const renderOverview = () => (
@@ -430,17 +492,15 @@ const ClientDashboard = () => {
               </div>
 
               <div className="booking-actions">
-
                 <button
                   className="btn-track"
                   onClick={() => setSelectedBooking(booking)}
                 >
                   <MapPin size={16} />
-                  {booking.status === 'pending' ? 'View Details' : 'Track Vendor'}
+                  {booking.status === "pending"
+                    ? "View Details"
+                    : "Track Vendor"}
                 </button>
-
-
-
 
                 {booking.status === "pending" && (
                   <button
@@ -608,4 +668,3 @@ const ClientDashboard = () => {
 };
 
 export default ClientDashboard;
-
