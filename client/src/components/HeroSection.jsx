@@ -18,21 +18,12 @@ const HeroSection = ({ onRegisterClick }) => {
         <div className="hero-buttons">
           <button
             onClick={() => navigate("/book-pickup")}
-            className="btn-secondary"
+            className="btn-book-pickup"
           >
             Book Pickup Now
           </button>
 
           {isAuthenticated && (
-            /* <button
-               onClick={() => navigate(user?.role === "vendor" ? "/vendor-dashboard" : "/dashboard")}
-               className="btn-primary"
-             >
-               Client Dashboard
-             </button>
-             */
-
-
             <>
               <button
                 onClick={() => navigate("/dashboard")}
@@ -50,9 +41,6 @@ const HeroSection = ({ onRegisterClick }) => {
                 Vendor Dashboard
               </button>
             </>
-
-
-
           )}
         </div>
       </div>
