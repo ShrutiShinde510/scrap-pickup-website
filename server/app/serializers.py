@@ -143,6 +143,8 @@ class SellerRegistrationSerializer(serializers.ModelSerializer):
 class PickupRequestSerializer(serializers.ModelSerializer):
     contact_name = serializers.CharField(required=False, allow_blank=True)
     contact_phone = serializers.CharField(required=False, allow_blank=True)
+    vendor_name = serializers.SerializerMethodField()
+    vendor_phone = serializers.SerializerMethodField()
 
     class Meta:
         model = PickupRequest
@@ -162,8 +164,16 @@ class PickupRequestSerializer(serializers.ModelSerializer):
             "quantity",
             "estimated_price",
             "created_at",
+            "vendor_name",
+            "vendor_phone",
         ]
         read_only_fields = ["id", "status", "is_phone_verified", "created_at"]
+
+    def get_vendor_name(self, obj):
+        return obj.assigned_to.full_name if obj.assigned_to else None
+
+    def get_vendor_phone(self, obj):
+        return obj.assigned_to.phone_number if obj.assigned_to else None
 
 
 class OTPVerificationSerializer(serializers.Serializer):

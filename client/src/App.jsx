@@ -1,5 +1,6 @@
 import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -18,7 +19,7 @@ import "./App.css";
 import ClientRegistrationModal from "./components/ClientRegistrationModal";
 
 function App() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
 
   if (isLoading) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
@@ -36,15 +37,9 @@ function App() {
         <Routes>
           <Route path="/" element={<HomePage />} />
 
-          <Route
-            path="/login"
-            element={isAuthenticated ? <Navigate to="/" /> : <LoginPage />}
-          />
+          <Route path="/login" element={<LoginPage />} />
 
-          <Route
-            path="/signup"
-            element={isAuthenticated ? <Navigate to="/" /> : <SignupPage />}
-          />
+          <Route path="/signup" element={<SignupPage />} />
 
           <Route path="/verify-email" element={<VerifyEmailPage />} />
 
@@ -55,11 +50,6 @@ function App() {
                 <BookPickupPage />
               </ProtectedRoute>
             }
-          />
-
-          <Route
-            path="/client-registration"
-            element={<Navigate to="/signup" />}
           />
 
           <Route
@@ -76,30 +66,17 @@ function App() {
             }
           />
 
-
-
-
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute requireVerification>
-                <ClientDashboard />
-              </ProtectedRoute>
-            }
-          />
-
           <Route path="/vendor-dashboard" element={<VendorDashboard />} />
 
           {/* Redirects */}
           <Route path="/client-registration" element={<Navigate to="/signup" />} />
-
-
 
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </main>
 
       {!hideLayout && <Footer />}
+      <Toaster position="top-center" />
     </div>
   );
 }

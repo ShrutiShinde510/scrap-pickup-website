@@ -112,6 +112,12 @@ class CreatePickupView(GenericAPIView):
         if serializer.is_valid():
             pickup_request = serializer.save(user=request.user)
 
+            # Auto-confirm if user is already verified
+            if request.user.is_phone_verified:
+                pickup_request.status = "confirmed"
+                pickup_request.is_phone_verified = True
+                pickup_request.save()
+
             return Response(
                 {
                     "message": "Pickup request initiated.",
@@ -296,3 +302,103 @@ class CancelPickupView(GenericAPIView):
             return Response(
                 {"error": "Booking not found"}, status=status.HTTP_404_NOT_FOUND
             )
+
+
+class AvailablePickupsView(GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = PickupRequestSerializer
+
+    def get(self, request):
+        if not request.user.is_seller:
+             return Response({"error": "Only vendors can view available pickups"}, status=status.HTTP_403_FORBIDDEN)
+        
+        # Pickups that are confirmed (ready for vendor) and not yet assigned
+        # Logic: status='confirmed' means client verified phone & created request.
+        # assigned_to is None means no one took it yet.
+        pickups = PickupRequest.objects.filter(status="confirmed", assigned_to__isnull=True).order_by("-created_at")
+        serializer = self.get_serializer(pickups, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class VendorPickupsView(GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = PickupRequestSerializer
+
+    def get(self, request):
+        if not request.user.is_seller:
+             return Response({"error": "Only vendors can view their pickups"}, status=status.HTTP_403_FORBIDDEN)
+
+        pickups = PickupRequest.objects.filter(assigned_to=request.user).order_by("-updated_at")
+        serializer = self.get_serializer(pickups, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class AcceptPickupView(GenericAPIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        if not request.user.is_seller:
+             return Response({"error": "Only vendors can accept pickups"}, status=status.HTTP_403_FORBIDDEN)
+
+        try:
+            pickup = PickupRequest.objects.get(id=pk, status="confirmed", assigned_to__isnull=True)
+            pickup.assigned_to = request.user
+            pickup.status = "vendor_accepted"
+            pickup.save()
+            return Response({"message": "Pickup accepted. Waiting for client approval."}, status=status.HTTP_200_OK)
+        except PickupRequest.DoesNotExist:
+            return Response({"error": "Pickup unavailable or already taken"}, status=status.HTTP_404_NOT_FOUND)
+
+
+class VendorCancelPickupView(GenericAPIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+         # Vendor cancels their acceptance status (if still in vendor_accepted)
+        try:
+            pickup = PickupRequest.objects.get(id=pk, assigned_to=request.user)
+            if pickup.status == "vendor_accepted":
+                pickup.assigned_to = None
+                pickup.status = "confirmed" # Release back to pool
+                pickup.save()
+                return Response({"message": "Pickup acceptance cancelled. Released back to pool."}, status=status.HTTP_200_OK)
+            else:
+                 return Response({"error": "Cannot cancel. Status is not 'vendor_accepted'."}, status=status.HTTP_400_BAD_REQUEST)
+        except PickupRequest.DoesNotExist:
+            return Response({"error": "Pickup not found"}, status=status.HTTP_404_NOT_FOUND)
+
+
+class ApproveVendorView(GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request, pk):
+        # Client approves the vendor assigned to their pickup
+        try:
+            pickup = PickupRequest.objects.get(id=pk, user=request.user)
+            if pickup.status == "vendor_accepted" and pickup.assigned_to:
+                pickup.status = "scheduled"
+                pickup.save()
+                return Response({"message": "Vendor approved. Pickup scheduled."}, status=status.HTTP_200_OK)
+            else:
+                return Response({"error": "Invalid status for approval"}, status=status.HTTP_400_BAD_REQUEST)
+        except PickupRequest.DoesNotExist:
+             return Response({"error": "Pickup request not found"}, status=status.HTTP_404_NOT_FOUND)
+
+
+class RejectVendorView(GenericAPIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        # Client rejects the vendor
+        try:
+            pickup = PickupRequest.objects.get(id=pk, user=request.user)
+            if pickup.status == "vendor_accepted":
+                pickup.assigned_to = None
+                pickup.status = "confirmed" # Go back to pool
+                pickup.save()
+                return Response({"message": "Vendor rejected. Request is open again."}, status=status.HTTP_200_OK)
+            else:
+                 return Response({"error": "Invalid status for rejection"}, status=status.HTTP_400_BAD_REQUEST)
+        except PickupRequest.DoesNotExist:
+             return Response({"error": "Pickup request not found"}, status=status.HTTP_404_NOT_FOUND)
+

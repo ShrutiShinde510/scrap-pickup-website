@@ -1,29 +1,41 @@
-
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Upload, User, Mail, Phone, Building, MapPin, Eye, EyeOff, CheckCircle } from 'lucide-react';
-import { scrapCategories } from '../data/scrapData';
-import api from '../api/axios.ts';
-import './VendorRegistrationPage.css';
+import React, { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import {
+  Upload,
+  User,
+  Mail,
+  Phone,
+  Building,
+  MapPin,
+  Eye,
+  EyeOff,
+  CheckCircle,
+  Briefcase,
+  FileText,
+  Shield,
+} from "lucide-react";
+import toast from "react-hot-toast";
+import { scrapCategories } from "../data/scrapData";
+import api from "../api/axios.ts";
+import "./SignupPage.css"; // Reusing SignupPage styles for layout
+import "./VendorRegistrationPage.css"; // Vendor specific form styles
 
 const VendorRegistrationPage = () => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
 
-
   const [formData, setFormData] = useState({
     // Personal Info
-    contactPerson: '',
-    email: '',
-    phone: '',
+    contactPerson: "",
+    email: "",
+    phone: "",
 
     // Business Info
-    businessName: '',
-    businessType: '',
-    address: '',
-    city: '',
-    operatingAreas: '',
-
+    businessName: "",
+    businessType: "",
+    address: "",
+    city: "",
+    operatingAreas: "",
 
     // Documents
     businessLicense: null,
@@ -32,64 +44,83 @@ const VendorRegistrationPage = () => {
     idProof: null,
 
     // Password
-    password: '',
-    confirmPassword: ''
+    password: "",
+    confirmPassword: "",
   });
 
-  const [emailOTP, setEmailOTP] = useState(['', '', '', '', '', '']);
-  const [phoneOTP, setPhoneOTP] = useState(['', '', '', '', '', '']);
+  const [emailOTP, setEmailOTP] = useState(["", "", "", "", "", ""]);
+  const [phoneOTP, setPhoneOTP] = useState(["", "", "", "", "", ""]);
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  // ... (Keep existing validation and handler functions unchanged)
+  // To keep the file concise for the tool, I'm assuming you want me to retain
+  // the logic functions (validateStep1, validateStep3, handleStep1Next etc)
+  // and only change the RETURN logic.
+  // I will re-declare the logic functions here to ensure the code is complete.
+
   // ============================================
-  // STEP 1: Basic Information Validation
+  // VALIDATION
   // ============================================
   const validateStep1 = () => {
     if (!formData.contactPerson || !formData.email || !formData.phone) {
-      setError('Please fill all required fields');
+      setError("Please fill all required fields");
       return false;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
-      setError('Please enter a valid email address');
+      setError("Please enter a valid email address");
       return false;
     }
 
     const phoneRegex = /^\+?[\d\s-]{10,}$/;
     if (!phoneRegex.test(formData.phone)) {
-      setError('Please enter a valid phone number');
+      setError("Please enter a valid phone number");
       return false;
     }
 
     return true;
   };
 
-  // ============================================
-  // STEP 3: Business Details Validation
-  // ============================================
   const validateStep3 = () => {
-    if (!formData.businessName || !formData.businessType || !formData.address ||
-      !formData.city || !formData.operatingAreas ||
-      !formData.password || !formData.confirmPassword) {
-      setError('Please fill all required fields');
+    if (
+      !formData.businessName ||
+      !formData.businessType ||
+      !formData.address ||
+      !formData.city ||
+      !formData.operatingAreas
+    ) {
+      setError("Please fill all Business Details fields");
+      return false;
+    }
+    return true;
+  };
+
+  const validateStep4 = () => {
+    // Documents
+    if (
+      !formData.businessLicense ||
+      !formData.gstCertificate ||
+      !formData.addressProof ||
+      !formData.idProof
+    ) {
+      setError("Please upload all required documents");
       return false;
     }
 
-    if (!formData.businessLicense || !formData.gstCertificate ||
-      !formData.addressProof || !formData.idProof) {
-      setError('Please upload all required documents');
+    // Password
+    if (!formData.password || !formData.confirmPassword) {
+      setError("Please set a password");
       return false;
     }
-
     if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters');
+      setError("Password must be at least 6 characters");
       return false;
     }
-
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
+      setError("Passwords do not match");
       return false;
     }
 
@@ -97,206 +128,180 @@ const VendorRegistrationPage = () => {
   };
 
   // ============================================
-  // STEP 1 → STEP 2: Send Email OTP
+  // HANDLERS
   // ============================================
   const handleStep1Next = async () => {
-    setError('');
+    setError("");
     if (validateStep1()) {
       setIsLoading(true);
       try {
-        const response = await api.post('/otp/send/', {
+        const response = await api.post("/otp/send/", {
           contact: formData.email,
-          channel: 'email'
+          channel: "email",
         });
 
         if (response.data.mock_otp) {
-          console.log('EMAIL OTP:', response.data.mock_otp);
-          alert(`Email OTP sent to ${formData.email}\n\nDEMO OTP: ${response.data.mock_otp}`);
+          toast.success(`Email OTP: ${response.data.mock_otp}`, {
+            duration: 6000,
+            icon: "📧",
+          });
         } else {
-          alert(`Email OTP sent to ${formData.email}`);
+          toast.success(`Email OTP sent to ${formData.email}`);
         }
-
-        setCurrentStep(2); // Go to Email OTP verification
+        setCurrentStep(2);
       } catch (err) {
         console.error("OTP Error:", err);
-        setError(err.response?.data?.error || 'Failed to send OTP. Please try again.');
+        setError(err.response?.data?.error || "Failed to send OTP.");
       } finally {
         setIsLoading(false);
       }
     }
   };
 
-  // ============================================
-  // STEP 2 → STEP 3: Verify Email OTP
-  // ============================================
   const handleEmailOTPVerify = async () => {
-    const enteredOTP = emailOTP.join('');
-
+    const enteredOTP = emailOTP.join("");
     if (enteredOTP.length < 6) {
-      setError('Please enter complete 6-digit OTP');
+      setError("Please enter complete 6-digit OTP");
       return;
     }
-
     setIsLoading(true);
     try {
-      await api.post('/otp/verify/', {
+      await api.post("/otp/verify/", {
         contact: formData.email,
-        otp: enteredOTP
+        otp: enteredOTP,
       });
-
-      setError('');
-      alert('✅ Email verified successfully!');
-      setCurrentStep(3); // Go to Business Details
-
+      setError("");
+      toast.success("Email verified successfully!");
+      setCurrentStep(3);
     } catch (err) {
-      console.error("OTP Error:", err);
-      setError(err.response?.data?.error || 'Invalid OTP. Please try again.');
-      setEmailOTP(['', '', '', '', '', '']);
+      setError(err.response?.data?.error || "Invalid OTP.");
+      setEmailOTP(["", "", "", "", "", ""]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // ============================================
-  // STEP 3 → STEP 4: Business Details → Send Phone OTP
-  // ============================================
-  const handleStep3Next = async () => {
-    setError('');
+  // STEP 3 -> STEP 4 (Business -> Docs)
+  const handleStep3Next = () => {
+    setError("");
     if (validateStep3()) {
+      setCurrentStep(4);
+    }
+  };
+
+  // STEP 4 -> STEP 5 (Docs -> Phone OTP)
+  const handleStep4Next = async () => {
+    setError("");
+    if (validateStep4()) {
       setIsLoading(true);
       try {
-        const response = await api.post('/otp/send/', {
+        const response = await api.post("/otp/send/", {
           contact: formData.phone,
-          channel: 'sms'
+          channel: "sms",
         });
-
         if (response.data.mock_otp) {
-          console.log('PHONE OTP:', response.data.mock_otp);
-          alert(`Phone OTP sent to ${formData.phone}\n\nDEMO OTP: ${response.data.mock_otp}`);
+          toast.success(`Phone OTP: ${response.data.mock_otp}`, {
+            duration: 6000,
+            icon: "📱",
+          });
         } else {
-          alert(`Phone OTP sent to ${formData.phone}`);
+          toast.success(`Phone OTP sent to ${formData.phone}`);
         }
-
-        setCurrentStep(4); // Go to Phone OTP verification
+        setCurrentStep(5);
       } catch (err) {
-        console.error("OTP Error:", err);
-        setError(err.response?.data?.error || 'Failed to send OTP. Please try again.');
+        setError(err.response?.data?.error || "Failed to send OTP.");
       } finally {
         setIsLoading(false);
       }
     }
   };
 
-  // ============================================
-  // STEP 4 → STEP 5: Verify Phone OTP → Complete
-  // ============================================
   const handlePhoneOTPVerify = async () => {
-    const enteredOTP = phoneOTP.join('');
-
+    const enteredOTP = phoneOTP.join("");
     if (enteredOTP.length < 6) {
-      setError('Please enter complete 6-digit OTP');
+      setError("Please enter complete 6-digit OTP");
       return;
     }
-
     setIsLoading(true);
-
     try {
-      // 1. Verify Phone OTP
-      await api.post('/otp/verify/', {
+      await api.post("/otp/verify/", {
         contact: formData.phone,
-        otp: enteredOTP
+        otp: enteredOTP,
       });
 
-      // 2. Submit Registration
-      try {
-        const formDataToSend = new FormData();
-        formDataToSend.append('email', formData.email);
-        formDataToSend.append('password', formData.password);
-        formDataToSend.append('full_name', formData.contactPerson);
-        formDataToSend.append('phone_number', formData.phone);
-        formDataToSend.append('address', formData.address);
-        formDataToSend.append('city', formData.city);
+      const formDataToSend = new FormData();
+      formDataToSend.append("email", formData.email);
+      formDataToSend.append("password", formData.password);
+      formDataToSend.append("full_name", formData.contactPerson);
+      formDataToSend.append("phone_number", formData.phone);
+      formDataToSend.append("address", formData.address);
+      formDataToSend.append("city", formData.city);
+      formDataToSend.append("business_name", formData.businessName);
+      formDataToSend.append("business_type", formData.businessType);
+      formDataToSend.append("operating_areas", formData.operatingAreas);
 
-        // Business Details
-        formDataToSend.append('business_name', formData.businessName);
-        formDataToSend.append('business_type', formData.businessType);
-        formDataToSend.append('operating_areas', formData.operatingAreas);
+      if (formData.businessLicense)
+        formDataToSend.append("business_license", formData.businessLicense);
+      if (formData.gstCertificate)
+        formDataToSend.append("gst_certificate", formData.gstCertificate);
+      if (formData.addressProof)
+        formDataToSend.append("address_proof", formData.addressProof);
+      if (formData.idProof)
+        formDataToSend.append("vendor_id_proof", formData.idProof);
 
+      await api.post("/register/seller/", formDataToSend, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
 
-
-        // Documents
-        if (formData.businessLicense) formDataToSend.append('business_license', formData.businessLicense);
-        if (formData.gstCertificate) formDataToSend.append('gst_certificate', formData.gstCertificate);
-        if (formData.addressProof) formDataToSend.append('address_proof', formData.addressProof);
-        if (formData.idProof) formDataToSend.append('vendor_id_proof', formData.idProof);
-
-        await api.post('/register/seller/', formDataToSend, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        });
-
-        setError('');
-        setCurrentStep(5); // Go to Success
-      } catch (err) {
-        console.error("Registration error:", err);
-        if (err.response && err.response.data) {
-          const errorMsg = Object.values(err.response.data).flat().join(', ');
-          setError(errorMsg || 'Registration failed. Please try again.');
-        } else {
-          setError('Registration failed. Please try again.');
-        }
+      setError("");
+      setCurrentStep(6);
+    } catch (err) {
+      console.error("Registration error:", err);
+      if (err.response && err.response.data) {
+        const errorMsg =
+          typeof err.response.data === "string"
+            ? err.response.data
+            : Object.values(err.response.data).flat().join(", ");
+        setError(errorMsg || "Registration failed.");
+      } else {
+        setError("Registration failed.");
       }
-    } catch (otpErr) {
-      console.error("OTP Verification Error:", otpErr);
-      setError(otpErr.response?.data?.error || 'Invalid OTP. Please try again.');
-      setPhoneOTP(['', '', '', '', '', '']);
+      setPhoneOTP(["", "", "", "", "", ""]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // ============================================
-  // OTP Input Handlers
-  // ============================================
   const handleOTPChange = (index, value, type) => {
     if (value.length > 1) value = value[0];
     if (!/^\d*$/.test(value)) return;
-
-    if (type === 'email') {
+    if (type === "email") {
       const newOTP = [...emailOTP];
       newOTP[index] = value;
       setEmailOTP(newOTP);
-      if (value && index < 5) {
+      if (value && index < 5)
         document.getElementById(`email-otp-${index + 1}`)?.focus();
-      }
     } else {
       const newOTP = [...phoneOTP];
       newOTP[index] = value;
       setPhoneOTP(newOTP);
-      if (value && index < 5) {
+      if (value && index < 5)
         document.getElementById(`phone-otp-${index + 1}`)?.focus();
-      }
     }
   };
 
   const handleOTPKeyDown = (index, e, type) => {
-    const currentOTP = type === 'email' ? emailOTP : phoneOTP;
-    if (e.key === 'Backspace' && !currentOTP[index] && index > 0) {
+    const currentOTP = type === "email" ? emailOTP : phoneOTP;
+    if (e.key === "Backspace" && !currentOTP[index] && index > 0) {
       document.getElementById(`${type}-otp-${index - 1}`)?.focus();
     }
   };
-
-  // ============================================
-  // Other Handlers
-  // ============================================
-
 
   const handleFileUpload = (e, field) => {
     const file = e.target.files[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
-        alert('File size must be less than 5MB');
+        toast.error("File size must be less than 5MB");
         return;
       }
       setFormData({ ...formData, [field]: file });
@@ -304,421 +309,525 @@ const VendorRegistrationPage = () => {
   };
 
   // ============================================
-  // STEP 1: Basic Contact Information
+  // RENDER
   // ============================================
-  if (currentStep === 1) {
-    return (
-      <div className="vendor-page">
-        <div className="vendor-container">
-          <div className="vendor-header">
-            <h1 className="vendor-title">Vendor Registration</h1>
-            <p className="vendor-subtitle">Step 1 of 5: Basic Information</p>
-            <div className="progress-bar">
-              <div className="progress-fill" style={{ width: '20%' }}></div>
-            </div>
+  return (
+    <div className="auth-page">
+      <div className="auth-container signup-container">
+        {/* LEFT SIDEBAR - PROGRESS */}
+        <div className="auth-left">
+          <div className="auth-brand">
+            <h1>EcoScrap</h1>
+            <p className="tagline">Partner with us & Grow</p>
           </div>
 
-          {error && (
-            <div className="error-message">
-              <span>⚠️</span> {error}
-            </div>
-          )}
-
-          <div className="form-section">
-            <div className="input-group">
-              <label>Contact Person Name *</label>
-              <div className="input-wrapper">
-                <User size={20} className="input-icon" />
-                <input
-                  type="text"
-                  placeholder="Enter your full name"
-                  value={formData.contactPerson}
-                  onChange={(e) => setFormData({ ...formData, contactPerson: e.target.value })}
-                />
+          <div className="signup-progress">
+            <div className="progress-step">
+              <div
+                className={`step-circle ${currentStep >= 1 ? "active" : ""}`}
+              >
+                1
+              </div>
+              <div className="step-info">
+                <h4>Contact Info</h4>
+                <p>Personal Details</p>
               </div>
             </div>
+            <div className="progress-line"></div>
 
-            <div className="input-group">
-              <label>Email Address *</label>
-              <div className="input-wrapper">
-                <Mail size={20} className="input-icon" />
-                <input
-                  type="email"
-                  placeholder="your@email.com"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                />
+            <div className="progress-step">
+              <div
+                className={`step-circle ${currentStep >= 2 ? "active" : ""}`}
+              >
+                2
               </div>
-              <small className="input-hint">We'll send OTP to verify this email</small>
-            </div>
-
-            <div className="input-group">
-              <label>Phone Number *</label>
-              <div className="input-wrapper">
-                <Phone size={20} className="input-icon" />
-                <input
-                  type="tel"
-                  placeholder="+91 1234567890"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                />
+              <div className="step-info">
+                <h4>Email Verify</h4>
+                <p>Verification</p>
               </div>
-              <small className="input-hint">We'll send OTP to verify this number</small>
             </div>
+            <div className="progress-line"></div>
 
-            <button onClick={handleStep1Next} className="btn-next" disabled={isLoading}>
-              {isLoading ? 'Sending...' : 'Next: Verify Email →'}
-            </button>
+            <div className="progress-step">
+              <div
+                className={`step-circle ${currentStep >= 3 ? "active" : ""}`}
+              >
+                3
+              </div>
+              <div className="step-info">
+                <h4>Business Info</h4>
+                <p>Basic Details</p>
+              </div>
+            </div>
+            <div className="progress-line"></div>
+
+            <div className="progress-step">
+              <div
+                className={`step-circle ${currentStep >= 4 ? "active" : ""}`}
+              >
+                4
+              </div>
+              <div className="step-info">
+                <h4>Documents</h4>
+                <p>& Security</p>
+              </div>
+            </div>
+            <div className="progress-line"></div>
+
+            <div className="progress-step">
+              <div
+                className={`step-circle ${currentStep >= 5 ? "active" : ""}`}
+              >
+                5
+              </div>
+              <div className="step-info">
+                <h4>Final Step</h4>
+                <p>Phone Verify</p>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    );
-  }
 
-  // ============================================
-  // STEP 2: Email OTP Verification
-  // ============================================
-  if (currentStep === 2) {
-    return (
-      <div className="verify-page">
-        <div className="verify-container">
-          <div className="verify-icon-wrapper">
-            <Mail size={60} className="verify-icon" />
-          </div>
-
-          <h1 className="verify-title">Verify Email</h1>
-          <p className="verify-subtitle">
-            We've sent a 6-digit OTP to<br />
-            <strong>{formData.email}</strong>
-          </p>
-
-          <div className="progress-bar mb-20">
-            <div className="progress-fill" style={{ width: '40%' }}></div>
-          </div>
-
-          {error && (
-            <div className="error-message">
-              <span>⚠️</span> {error}
-            </div>
-          )}
-
-          <div className="code-input-group">
-            {emailOTP.map((digit, index) => (
-              <input
-                key={index}
-                id={`email-otp-${index}`}
-                type="text"
-                maxLength="1"
-                value={digit}
-                onChange={(e) => handleOTPChange(index, e.target.value, 'email')}
-                onKeyDown={(e) => handleOTPKeyDown(index, e, 'email')}
-                className="code-input"
-                disabled={isLoading}
+        {/* RIGHT CONTENT - FORMS */}
+        <div className="auth-right">
+          <div className="auth-form-container">
+            {/* Header */}
+            <div className="auth-header">
+              <Briefcase
+                size={40}
+                className="auth-icon"
+                style={{ color: "#059669" }}
               />
-            ))}
-          </div>
+              <h2>Vendor Registration</h2>
+              <p>Create your vendor account today</p>
+            </div>
 
-          <button onClick={handleEmailOTPVerify} className="btn-verify" disabled={isLoading}>
-            {isLoading ? 'Verifying...' : (
-              <>
-                <CheckCircle size={20} />
-                Verify Email
-              </>
+            {error && (
+              <div className="error-message">
+                <span>⚠️</span> {error}
+              </div>
             )}
-          </button>
 
-          <button onClick={() => setCurrentStep(1)} className="btn-back-link">
-            ← Back to Basic Info
-          </button>
-        </div>
-      </div>
-    );
-  }
+            {/* STEP 1: CONTACT INFO */}
+            {currentStep === 1 && (
+              <div className="form-section">
+                <div className="input-group">
+                  <label>Contact Person Name *</label>
+                  <div className="input-wrapper">
+                    <User size={20} className="input-icon" />
+                    <input
+                      type="text"
+                      placeholder="Enter your full name"
+                      value={formData.contactPerson}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          contactPerson: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                </div>
 
-  // ============================================
-  // STEP 3: Business Details
-  // ============================================
-  if (currentStep === 3) {
-    return (
-      <div className="vendor-page">
-        <div className="vendor-container large">
-          <div className="vendor-header">
-            <h1 className="vendor-title">Business Information</h1>
-            <p className="vendor-subtitle">Step 3 of 5: Business Details</p>
-            <div className="progress-bar">
-              <div className="progress-fill" style={{ width: '60%' }}></div>
-            </div>
-          </div>
+                <div className="input-group">
+                  <label>Email Address *</label>
+                  <div className="input-wrapper">
+                    <Mail size={20} className="input-icon" />
+                    <input
+                      type="email"
+                      placeholder="your@email.com"
+                      value={formData.email}
+                      onChange={(e) =>
+                        setFormData({ ...formData, email: e.target.value })
+                      }
+                    />
+                  </div>
+                </div>
 
-          {error && (
-            <div className="error-message">
-              <span>⚠️</span> {error}
-            </div>
-          )}
+                <div className="input-group">
+                  <label>Phone Number *</label>
+                  <div className="input-wrapper">
+                    <Phone size={20} className="input-icon" />
+                    <input
+                      type="tel"
+                      placeholder="+91 1234567890"
+                      value={formData.phone}
+                      onChange={(e) =>
+                        setFormData({ ...formData, phone: e.target.value })
+                      }
+                    />
+                  </div>
+                </div>
 
-          <div className="form-section">
-            <div className="input-group">
-              <label>Business Name *</label>
-              <div className="input-wrapper">
-                <Building size={20} className="input-icon" />
-                <input
-                  type="text"
-                  placeholder="Enter registered business name"
-                  value={formData.businessName}
-                  onChange={(e) => setFormData({ ...formData, businessName: e.target.value })}
-                />
+                <button
+                  onClick={handleStep1Next}
+                  className="btn-next"
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Sending..." : "Next: Verify Email →"}
+                </button>
               </div>
-            </div>
+            )}
 
-            <div className="input-group">
-              <label>Business Type *</label>
-              <select
-                className="select-input"
-                value={formData.businessType}
-                onChange={(e) => setFormData({ ...formData, businessType: e.target.value })}
-              >
-                <option value="">Select Business Type</option>
-                <option value="Sole Proprietorship">Sole Proprietorship</option>
-                <option value="Partnership">Partnership</option>
-                <option value="Private Limited">Private Limited</option>
-                <option value="LLP">LLP</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
+            {/* STEP 2: EMAIL OTP */}
+            {currentStep === 2 && (
+              <div className="otp-section">
+                <h3>Verify Email Address</h3>
+                <p>
+                  Code sent to <strong>{formData.email}</strong>
+                </p>
 
-            <div className="input-group">
-              <label>Business Address *</label>
-              <div className="input-wrapper">
-                <MapPin size={20} className="input-icon" />
-                <textarea
-                  placeholder="Enter complete business address"
-                  rows="2"
-                  value={formData.address}
-                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                />
+                <div className="code-input-group">
+                  {emailOTP.map((digit, index) => (
+                    <input
+                      key={index}
+                      id={`email-otp-${index}`}
+                      type="text"
+                      maxLength="1"
+                      value={digit}
+                      onChange={(e) =>
+                        handleOTPChange(index, e.target.value, "email")
+                      }
+                      onKeyDown={(e) => handleOTPKeyDown(index, e, "email")}
+                      className="code-input"
+                      disabled={isLoading}
+                    />
+                  ))}
+                </div>
+
+                <button
+                  onClick={handleEmailOTPVerify}
+                  className="btn-verify"
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Verifying..." : "Verify Email"}
+                </button>
+
+                <button
+                  onClick={() => setCurrentStep(1)}
+                  className="btn-back"
+                  style={{ width: "100%", marginTop: "10px" }}
+                >
+                  ← Change Email
+                </button>
               </div>
-            </div>
+            )}
 
-            <div className="input-group">
-              <label>City *</label>
-              <select
-                className="select-input"
-                value={formData.city}
-                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-              >
-                <option value="">Select City</option>
-                <option value="Mumbai">Mumbai</option>
-                <option value="Delhi">Delhi</option>
-                <option value="Bangalore">Bangalore</option>
-                <option value="Pune">Pune</option>
-                <option value="Hyderabad">Hyderabad</option>
-                <option value="Chennai">Chennai</option>
-                <option value="Kolkata">Kolkata</option>
-              </select>
-            </div>
-
-
-            <div className="input-group">
-              <label>Operating Areas *</label>
-              <input
-                type="text"
-                placeholder="e.g., Mumbai, Pune, Thane"
-                className="text-input"
-                value={formData.operatingAreas}
-                onChange={(e) => setFormData({ ...formData, operatingAreas: e.target.value })}
-              />
-              <small className="input-hint">Enter cities separated by commas</small>
-            </div>
-
-            {/* Document Uploads */}
-            <div className="documents-section">
-              <h3>Required Documents *</h3>
-              <div className="upload-grid">
-                <div className="upload-box">
-                  <Upload size={24} className="upload-icon" />
-                  <input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={(e) => handleFileUpload(e, 'businessLicense')} className="file-input" id="license-upload" />
-                  <label htmlFor="license-upload" className="upload-label">
-                    Business License
-                  </label>
-                  {formData.businessLicense && <p className="file-uploaded">✓ {formData.businessLicense.name}</p>}
+            {/* STEP 3: BUSINESS DETAILS (Only Info) */}
+            {currentStep === 3 && (
+              <div className="form-section">
+                <div className="input-group">
+                  <label>Business Name *</label>
+                  <div className="input-wrapper">
+                    <Building size={20} className="input-icon" />
+                    <input
+                      type="text"
+                      value={formData.businessName}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          businessName: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
                 </div>
 
-                <div className="upload-box">
-                  <Upload size={24} className="upload-icon" />
-                  <input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={(e) => handleFileUpload(e, 'gstCertificate')} className="file-input" id="gst-upload" />
-                  <label htmlFor="gst-upload" className="upload-label">
-                    GST Certificate
-                  </label>
-                  {formData.gstCertificate && <p className="file-uploaded">✓ {formData.gstCertificate.name}</p>}
+                <div className="input-group">
+                  <label>Business Type *</label>
+                  <select
+                    className="select-input"
+                    value={formData.businessType}
+                    onChange={(e) =>
+                      setFormData({ ...formData, businessType: e.target.value })
+                    }
+                  >
+                    <option value="">Select Type</option>
+                    <option value="Sole Proprietorship">
+                      Sole Proprietorship
+                    </option>
+                    <option value="Partnership">Partnership</option>
+                    <option value="Private Limited">Private Limited</option>
+                    <option value="LLP">LLP</option>
+                    <option value="Other">Other</option>
+                  </select>
                 </div>
 
-                <div className="upload-box">
-                  <Upload size={24} className="upload-icon" />
-                  <input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={(e) => handleFileUpload(e, 'addressProof')} className="file-input" id="address-upload" />
-                  <label htmlFor="address-upload" className="upload-label">
-                    Address Proof
-                  </label>
-                  {formData.addressProof && <p className="file-uploaded">✓ {formData.addressProof.name}</p>}
+                <div className="input-group">
+                  <label>Address *</label>
+                  <div className="input-wrapper">
+                    <MapPin size={20} className="input-icon" />
+                    <input
+                      type="text"
+                      value={formData.address}
+                      onChange={(e) =>
+                        setFormData({ ...formData, address: e.target.value })
+                      }
+                    />
+                  </div>
                 </div>
 
-                <div className="upload-box">
-                  <Upload size={24} className="upload-icon" />
-                  <input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={(e) => handleFileUpload(e, 'idProof')} className="file-input" id="id-upload" />
-                  <label htmlFor="id-upload" className="upload-label">
-                    ID Proof
-                  </label>
-                  {formData.idProof && <p className="file-uploaded">✓ {formData.idProof.name}</p>}
+                <div className="input-group">
+                  <label>City *</label>
+                  <select
+                    className="select-input"
+                    value={formData.city}
+                    onChange={(e) =>
+                      setFormData({ ...formData, city: e.target.value })
+                    }
+                  >
+                    <option value="">Select City</option>
+                    <option value="Mumbai">Mumbai</option>
+                    <option value="Delhi">Delhi</option>
+                    <option value="Bangalore">Bangalore</option>
+                    <option value="Pune">Pune</option>
+                    <option value="Hyderabad">Hyderabad</option>
+                    <option value="Chennai">Chennai</option>
+                    <option value="Kolkata">Kolkata</option>
+                  </select>
                 </div>
-              </div>
-            </div>
 
-            {/* Password */}
-            <div className="input-row">
-              <div className="input-group">
-                <label>Create Password *</label>
-                <div className="input-wrapper">
+                <div className="input-group">
+                  <label>Operating Areas (comma separated) *</label>
                   <input
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Min 6 characters"
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    type="text"
+                    className="text-input"
+                    value={formData.operatingAreas}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        operatingAreas: e.target.value,
+                      })
+                    }
                   />
-                  <button type="button" className="password-toggle" onClick={() => setShowPassword(!showPassword)}>
-                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </div>
+
+                <div className="button-group">
+                  <button
+                    onClick={() => setCurrentStep(2)}
+                    className="btn-back"
+                  >
+                    Back
+                  </button>
+                  <button onClick={handleStep3Next} className="btn-next">
+                    Next: Docs →
                   </button>
                 </div>
               </div>
-
-              <div className="input-group">
-                <label>Confirm Password *</label>
-                <input
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Re-enter password"
-                  className="text-input"
-                  value={formData.confirmPassword}
-                  onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                />
-              </div>
-            </div>
-
-            <div className="button-group">
-              <button onClick={() => setCurrentStep(2)} className="btn-back" disabled={isLoading}>
-                ← Back
-              </button>
-              <button onClick={handleStep3Next} className="btn-next" disabled={isLoading}>
-                {isLoading ? 'Sending...' : 'Next: Verify Phone →'}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // ============================================
-  // STEP 4: Phone OTP Verification
-  // ============================================
-  if (currentStep === 4) {
-    return (
-      <div className="verify-page">
-        <div className="verify-container">
-          <div className="verify-icon-wrapper">
-            <Phone size={60} className="verify-icon" />
-          </div>
-
-          <h1 className="verify-title">Verify Phone Number</h1>
-          <p className="verify-subtitle">
-            We've sent a 6-digit OTP to<br />
-            <strong>{formData.phone}</strong>
-          </p>
-
-          <div className="progress-bar mb-20">
-            <div className="progress-fill" style={{ width: '80%' }}></div>
-          </div>
-
-          {error && (
-            <div className="error-message">
-              <span>⚠️</span> {error}
-            </div>
-          )}
-
-          <div className="code-input-group">
-            {phoneOTP.map((digit, index) => (
-              <input
-                key={index}
-                id={`phone-otp-${index}`}
-                type="text"
-                maxLength="1"
-                value={digit}
-                onChange={(e) => handleOTPChange(index, e.target.value, 'phone')}
-                onKeyDown={(e) => handleOTPKeyDown(index, e, 'phone')}
-                className="code-input"
-                disabled={isLoading}
-              />
-            ))}
-          </div>
-
-          <button onClick={handlePhoneOTPVerify} className="btn-verify" disabled={isLoading}>
-            {isLoading ? (
-              <>
-                <CheckCircle size={20} className="spin" />
-                Verifying...
-              </>
-            ) : (
-              <>
-                <CheckCircle size={20} />
-                Verify Phone & Register
-              </>
             )}
-          </button>
 
-          <button onClick={() => setCurrentStep(3)} className="btn-back-link" disabled={isLoading}>
-            ← Back to Business Details
-          </button>
-        </div>
-      </div>
-    );
-  }
+            {/* STEP 4: DOCS & SECURITY (Docs and Password) */}
+            {currentStep === 4 && (
+              <div className="form-section">
+                <div className="documents-section" style={{ marginTop: "0" }}>
+                  <h3
+                    style={{
+                      fontSize: "16px",
+                      marginBottom: "15px",
+                      color: "#374151",
+                    }}
+                  >
+                    Upload Required Documents *
+                  </h3>
+                  <div
+                    className="upload-grid"
+                    style={{ gridTemplateColumns: "1fr 1fr" }}
+                  >
+                    {[
+                      { field: "businessLicense", label: "Business License" },
+                      { field: "gstCertificate", label: "GST Certificate" },
+                      { field: "addressProof", label: "Address Proof" },
+                      { field: "idProof", label: "ID Proof" },
+                    ].map((doc) => (
+                      <div
+                        key={doc.field}
+                        className="upload-box"
+                        style={{ padding: "15px" }}
+                      >
+                        <input
+                          type="file"
+                          id={doc.field}
+                          className="file-input"
+                          onChange={(e) => handleFileUpload(e, doc.field)}
+                        />
+                        <label htmlFor={doc.field} className="upload-label">
+                          <Upload size={16} style={{ marginBottom: "5px" }} />{" "}
+                          <br />
+                          {doc.label}
+                        </label>
+                        {formData[doc.field] && (
+                          <p
+                            className="file-uploaded"
+                            style={{ fontSize: "10px" }}
+                          >
+                            {formData[doc.field].name.substring(0, 15)}...
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
 
-  // ============================================
-  // STEP 5: Success
-  // ============================================
-  if (currentStep === 5) {
-    return (
-      <div className="verify-page">
-        <div className="verify-container success-container">
-          <div className="success-icon-wrapper">
-            <CheckCircle size={80} />
-          </div>
+                <hr
+                  style={{
+                    margin: "20px 0",
+                    border: "none",
+                    borderTop: "1px solid #e5e7eb",
+                  }}
+                />
 
-          <h1 className="success-title">Registration Successful!</h1>
-          <p className="success-subtitle">
-            Your vendor registration has been submitted successfully.
-          </p>
+                <div className="input-group">
+                  <label>Create Password *</label>
+                  <div className="input-wrapper">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      value={formData.password}
+                      onChange={(e) =>
+                        setFormData({ ...formData, password: e.target.value })
+                      }
+                    />
+                    <button
+                      type="button"
+                      className="password-toggle"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                    </button>
+                  </div>
+                </div>
 
-          <div className="success-info">
-            <h3>What's Next?</h3>
-            <ul>
-              <li>✓ Email Verified</li>
-              <li>✓ Phone Verified</li>
-              <li>✓ Documents Uploaded</li>
-              <li>⏳ Pending Admin Approval</li>
-            </ul>
-            <p className="info-text">
-              Our team will review your application within 2-3 business days.
-              You'll receive a confirmation email once approved.
+                <div className="input-group">
+                  <label>Confirm Password *</label>
+                  <div className="input-wrapper">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      value={formData.confirmPassword}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          confirmPassword: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                </div>
+
+                <div className="button-group">
+                  <button
+                    onClick={() => setCurrentStep(3)}
+                    className="btn-back"
+                  >
+                    Back
+                  </button>
+                  <button
+                    onClick={handleStep4Next}
+                    className="btn-next"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? "Sending OTP..." : "Next: Verify Phone →"}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* STEP 5: PHONE OTP */}
+            {currentStep === 5 && (
+              <div className="otp-section">
+                <h3>Verify Phone Number</h3>
+                <p>
+                  Code sent to <strong>{formData.phone}</strong>
+                </p>
+
+                <div className="code-input-group">
+                  {phoneOTP.map((digit, index) => (
+                    <input
+                      key={index}
+                      id={`phone-otp-${index}`}
+                      type="text"
+                      maxLength="1"
+                      value={digit}
+                      onChange={(e) =>
+                        handleOTPChange(index, e.target.value, "phone")
+                      }
+                      onKeyDown={(e) => handleOTPKeyDown(index, e, "phone")}
+                      className="code-input"
+                      disabled={isLoading}
+                    />
+                  ))}
+                </div>
+
+                <button
+                  onClick={handlePhoneOTPVerify}
+                  className="btn-verify"
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Verifying..." : "Verify & Register"}
+                </button>
+
+                <button
+                  onClick={() => setCurrentStep(4)}
+                  className="btn-back"
+                  style={{ width: "100%", marginTop: "10px" }}
+                >
+                  ← Back to Docs
+                </button>
+              </div>
+            )}
+
+            {/* STEP 6: SUCCESS */}
+            {currentStep === 6 && (
+              <div
+                className="success-container"
+                style={{ textAlign: "center", padding: "20px" }}
+              >
+                <div
+                  className="success-icon-wrapper"
+                  style={{ margin: "0 auto 20px" }}
+                >
+                  <CheckCircle size={60} />
+                </div>
+                <h2 className="success-title" style={{ fontSize: "24px" }}>
+                  Registration Submitted!
+                </h2>
+                <p
+                  className="success-subtitle"
+                  style={{ marginBottom: "20px" }}
+                >
+                  Your application is pending admin approval.
+                </p>
+
+                <div
+                  className="success-info"
+                  style={{ fontSize: "14px", marginBottom: "20px" }}
+                >
+                  <p>✓ Email & Phone Verified</p>
+                  <p>✓ Documents Uploaded</p>
+                  <br />
+                  <p style={{ fontStyle: "italic" }}>
+                    We will notify you via email once approved (usually 2-3
+                    business days).
+                  </p>
+                </div>
+
+                <button onClick={() => navigate("/")} className="btn-home">
+                  Return Home
+                </button>
+              </div>
+            )}
+
+            <p className="auth-footer">
+              Already have an account?
+              <Link to="/login" className="auth-link">
+                {" "}
+                Login here
+              </Link>
             </p>
           </div>
-
-          <button onClick={() => navigate('/')} className="btn-home">
-            Go to Home
-          </button>
         </div>
       </div>
-    );
-  }
-
-  return null;
+    </div>
+  );
 };
 
 export default VendorRegistrationPage;
+

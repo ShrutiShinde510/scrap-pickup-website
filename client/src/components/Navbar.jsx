@@ -1,65 +1,135 @@
-
-
-import React, { useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, User, LogIn, LogOut } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
-import './Navbar.css';
+import React, { useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Menu, X, User, LogIn, LogOut, LayoutDashboard, RefreshCw } from "lucide-react";
+import toast from 'react-hot-toast';
+import { useAuth } from "../context/AuthContext";
+import "./Navbar.css";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { user, isAuthenticated, logout } = useAuth();
 
+  // Determine active role based on localStorage or user properties
+  const activeRole = localStorage.getItem('userRole') === 'client' || (!user?.is_seller && user?.is_client) ? 'client' : 'vendor';
+
   const isActive = (path) => location.pathname === path;
 
-  const handleLogout = () => {
-    if (window.confirm('Are you sure you want to logout?')) {
+  const handleLogout = (redirectRole = null) => {
+    if (redirectRole) {
+      // Switching roles: Logout then redirect to login with target role
       logout();
-      navigate('/');
-      alert('Logged out successfully');
+      navigate(`/login?role=${redirectRole}`);
+      // toast.success(`Switching to ${redirectRole} login...`);
+    } else {
+      // Normal logout
+      if (window.confirm("Are you sure you want to logout?")) {
+        logout();
+        navigate("/");
+        toast.success("Logged out successfully");
+      }
     }
+    setIsOpen(false);
+    setIsDropdownOpen(false);
   };
 
   return (
     <nav className="navbar">
       <div className="navbar-container">
         <div className="navbar-content">
-          <Link to="/" className="navbar-logo">EcoScrap</Link>
+          <Link to="/" className="navbar-logo">
+            EcoScrap
+          </Link>
 
           <div className="navbar-menu">
-            <Link to="/" className={`nav-link ${isActive('/') ? 'active' : ''}`}>Home</Link>
-            <Link to="/book-pickup" className={`nav-link ${isActive('/book-pickup') ? 'active' : ''}`}>Book Pickup</Link>
-            <Link to="/vendor-registration" className={`nav-link ${isActive('/vendor-registration') ? 'active' : ''}`}>Vendor Registration</Link>
+            <Link
+              to="/"
+              className={`nav-link ${isActive("/") ? "active" : ""}`}
+            >
+              Home
+            </Link>
+            <Link
+              to="/book-pickup"
+              className={`nav-link ${isActive("/book-pickup") ? "active" : ""}`}
+            >
+              Book Pickup
+            </Link>
+            <Link
+              to="/vendor-registration"
+              className={`nav-link ${isActive("/vendor-registration") ? "active" : ""}`}
+            >
+              Vendor Registration
+            </Link>
 
             {isAuthenticated ? (
               <>
-                <Link
-                  to={user?.role === "vendor" ? "/vendor-dashboard" : "/dashboard"}
-                  className="user-menu"
-                  style={{ textDecoration: 'none', cursor: 'pointer' }}
-                >
-                  <div className="user-avatar"><User size={18} /></div>
-                  <div className="user-info">
-                    <span className="user-name">{user?.name || user?.full_name}</span>
-                    {user?.isVerified && <span className="verified-badge">✓ Verified</span>}
+                <div className="user-dropdown-container">
+                  <div
+                    className="user-menu"
+                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <div className="user-avatar">
+                      <User size={18} />
+                    </div>
+                    <div className="user-info">
+                      <span className="user-name">
+                        {user?.name || user?.full_name}
+                      </span>
+                      {(user?.is_phone_verified || user?.is_email_verified) && (
+                        <span className="verified-badge">✓ Verified</span>
+                      )}
+                    </div>
                   </div>
-                </Link>
-                <button onClick={handleLogout} className="btn-logout">
-                  <LogOut size={18} /> Logout
-                </button>
+
+                  {isDropdownOpen && (
+                    <div className="dropdown-menu">
+                      {/* Current Dashboard Link */}
+                      <Link
+                        to={(activeRole === 'client' || !user?.is_seller) ? '/dashboard' : '/vendor-dashboard'}
+                        className="dropdown-item"
+                        onClick={() => setIsDropdownOpen(false)}
+                      >
+                        <LayoutDashboard size={18} />
+                        My Dashboard
+                      </Link>
+
+                      {/* Switch Role Option */}
+                      <button
+                        className="dropdown-item"
+                        onClick={() => {
+                          const targetRole = activeRole === 'client' ? 'vendor' : 'client';
+                          handleLogout(targetRole); // Pass target role to logout handler
+                        }}
+                      >
+                        <RefreshCw size={18} />
+                        Switch to {activeRole === 'client' ? 'Vendor' : 'Client'}
+                      </button>
+
+                      <button
+                        onClick={() => handleLogout()}
+                        className="dropdown-item danger"
+                      >
+                        <LogOut size={18} /> Logout
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {isDropdownOpen && (
+                  <div
+                    style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 999 }}
+                    onClick={() => setIsDropdownOpen(false)}
+                  />
+                )}
               </>
             ) : (
               <>
-
-
                 <Link to="/signup" className="btn-signup-nav">
-                  <User size={18} /> Client Sign Up
+                  <User size={18} /> Sign Up
                 </Link>
-
-
-
               </>
             )}
           </div>
@@ -71,32 +141,70 @@ const Navbar = () => {
 
         {isOpen && (
           <div className="navbar-mobile">
-            <Link to="/" onClick={() => setIsOpen(false)} className="nav-link-mobile">Home</Link>
-            <Link to="/book-pickup" onClick={() => setIsOpen(false)} className="nav-link-mobile">Book Pickup</Link>
-            <Link to="/vendor-registration" onClick={() => setIsOpen(false)} className="nav-link-mobile">Vendor Registration</Link>
+            <Link
+              to="/"
+              onClick={() => setIsOpen(false)}
+              className="nav-link-mobile"
+            >
+              Home
+            </Link>
+            <Link
+              to="/book-pickup"
+              onClick={() => setIsOpen(false)}
+              className="nav-link-mobile"
+            >
+              Book Pickup
+            </Link>
+            <Link
+              to="/vendor-registration"
+              onClick={() => setIsOpen(false)}
+              className="nav-link-mobile"
+            >
+              Vendor Registration
+            </Link>
 
             {isAuthenticated ? (
               <>
                 <Link
-                  to={user?.role === "vendor" ? "/vendor-dashboard" : "/dashboard"}
+                  to={
+                    (localStorage.getItem('userRole') === 'client' || !user?.is_seller)
+                      ? "/dashboard"
+                      : "/vendor-dashboard"
+                  }
                   onClick={() => setIsOpen(false)}
                   className="user-info-mobile"
-                  style={{ textDecoration: 'none', color: 'inherit' }}
+                  style={{ textDecoration: "none", color: "inherit" }}
                 >
                   <User size={20} />
                   <span>{user?.name || user?.full_name}</span>
-                  {user?.isVerified && <span className="verified-badge">✓</span>}
+                  {(user?.is_phone_verified || user?.is_email_verified) && (
+                    <span className="verified-badge">✓</span>
+                  )}
                 </Link>
-                <button onClick={() => { handleLogout(); setIsOpen(false); }} className="btn-logout-mobile">
+                <button
+                  onClick={() => {
+                    handleLogout();
+                    setIsOpen(false);
+                  }}
+                  className="btn-logout-mobile"
+                >
                   <LogOut size={18} /> Logout
                 </button>
               </>
             ) : (
               <>
-                <Link to="/login" onClick={() => setIsOpen(false)} className="btn-login-mobile">
+                <Link
+                  to="/login"
+                  onClick={() => setIsOpen(false)}
+                  className="btn-login-mobile"
+                >
                   <LogIn size={18} /> Login
                 </Link>
-                <Link to="/signup" onClick={() => setIsOpen(false)} className="btn-signup-mobile">
+                <Link
+                  to="/signup"
+                  onClick={() => setIsOpen(false)}
+                  className="btn-signup-mobile"
+                >
                   <User size={18} /> Sign Up
                 </Link>
               </>
@@ -104,7 +212,7 @@ const Navbar = () => {
           </div>
         )}
       </div>
-    </nav>
+    </nav >
   );
 };
 

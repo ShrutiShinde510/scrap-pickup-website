@@ -14,6 +14,7 @@ import {
   Navigation,
   Phone,
 } from "lucide-react";
+import toast from 'react-hot-toast';
 import { GoogleMap, useJsApiLoader, Marker } from "@react-google-maps/api";
 import { useAuth } from "../context/AuthContext";
 import api from "../api/axios";
@@ -35,6 +36,12 @@ const ClientDashboard = () => {
   useEffect(() => {
     if (!user) {
       navigate("/login");
+      return;
+    }
+
+    // Access Control: Redirect if not a client
+    if (!user.is_client) {
+      navigate("/");
       return;
     }
 
@@ -68,7 +75,10 @@ const ClientDashboard = () => {
   const getStatusBadge = (status) => {
     const badges = {
       pending: { color: "#fbbf24", icon: Clock, text: "Pending" },
-      assigned: { color: "#3b82f6", icon: Calendar, text: "Assigned" },
+      confirmed: { color: "#3b82f6", icon: CheckCircle, text: "Confirmed" },
+      vendor_accepted: { color: "#f59e0b", icon: User, text: "Vendor Found!" },
+      scheduled: { color: "#8b5cf6", icon: Calendar, text: "Scheduled" },
+      assigned: { color: "#3b82f6", icon: Calendar, text: "Assigned" }, // Legacy
       in_progress: { color: "#8b5cf6", icon: TrendingUp, text: "In Progress" },
       completed: { color: "#10b981", icon: CheckCircle, text: "Completed" },
       cancelled: { color: "#ef4444", icon: XCircle, text: "Cancelled" },
@@ -103,14 +113,36 @@ const ClientDashboard = () => {
     try {
       await api.post(`pickup/cancel/${bookingId}/`);
       loadBookings();
-      alert("Booking cancelled successfully");
+      toast.success("Booking cancelled successfully");
     } catch (err) {
       console.error("Cancel Error:", err);
-      alert("Failed to cancel booking");
+      toast.error("Failed to cancel booking");
     }
   };
 
-  // NEW: Open Google Maps with vendor location
+  const handleApproveVendor = async (bookingId) => {
+    try {
+      await api.post(`/pickup/approve/${bookingId}/`);
+      toast.success("Vendor approved! Pickup scheduled.");
+      loadBookings();
+    } catch (err) {
+      console.error("Approve Error:", err);
+      toast.error(err.response?.data?.error || "Failed to approve vendor");
+    }
+  };
+
+  const handleRejectVendor = async (bookingId) => {
+    if (!confirm("Are you sure you want to reject this vendor? The request will go back to the pool.")) return;
+    try {
+      await api.post(`/pickup/reject/${bookingId}/`);
+      toast.success("Vendor rejected. Searching for another...");
+      loadBookings();
+    } catch (err) {
+      console.error("Reject Error:", err);
+      toast.error(err.response?.data?.error || "Failed to reject vendor");
+    }
+  };
+
   const openVendorLocation = (booking) => {
     // Mock vendor location - In real app, this comes from backend
     const vendorLat = booking.vendor_latitude || 18.5204;
@@ -122,7 +154,6 @@ const ClientDashboard = () => {
     );
   };
 
-  // NEW: Google Maps Integration
   const { isLoaded } = useJsApiLoader({
     id: "google-map-script",
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
@@ -132,7 +163,6 @@ const ClientDashboard = () => {
 
   const onLoad = React.useCallback(
     function callback(map) {
-      // This is just an example of getting and using the map instance!!!
       const bounds = new window.google.maps.LatLngBounds();
       if (selectedBooking) {
         bounds.extend({
@@ -162,7 +192,6 @@ const ClientDashboard = () => {
     lng: 73.8567,
   };
 
-  // NEW: Render Location Tracking Modal
   const renderLocationModal = () => {
     if (!selectedBooking) return null;
 
@@ -229,14 +258,33 @@ const ClientDashboard = () => {
             {/* Vendor Location */}
             <div className="modal-section">
               <h3>Vendor Information</h3>
-              {selectedBooking.status === "pending" ? (
+              {["pending", "confirmed"].includes(selectedBooking.status) ? (
                 <div className="vendor-pending">
                   <Clock
                     size={48}
                     style={{ color: "#fbbf24", marginBottom: "12px" }}
                   />
-                  <p>Vendor not assigned yet</p>
-                  <small>You'll be able to track vendor once assigned</small>
+                  <p>Searching for nearby vendors...</p>
+                  <small>Tracking will be available once a vendor is assigned.</small>
+                </div>
+              ) : selectedBooking.status === "vendor_accepted" ? (
+                <div className="vendor-pending">
+                  <User
+                    size={48}
+                    style={{ color: "#f59e0b", marginBottom: "12px" }}
+                  />
+                  <p>Vendor has accepted!</p>
+                  <p>Please approve the vendor to schedule.</p>
+                  <div style={{ display: 'flex', gap: '10px', marginTop: '15px', justifyContent: 'center' }}>
+                    <button className="btn-primary" onClick={() => {
+                      handleApproveVendor(selectedBooking.id);
+                      setSelectedBooking(null);
+                    }}>Approve</button>
+                    <button className="btn-cancel" onClick={() => {
+                      handleRejectVendor(selectedBooking.id);
+                      setSelectedBooking(null);
+                    }}>Reject</button>
+                  </div>
                 </div>
               ) : (
                 <>
@@ -372,7 +420,7 @@ const ClientDashboard = () => {
             <div className="booking-header">
               <div className="booking-id">
                 <Package size={16} />
-                <span>{booking.id}</span>
+                <span>#{booking.id}</span>
               </div>
               {getStatusBadge(booking.status)}
             </div>
@@ -497,12 +545,12 @@ const ClientDashboard = () => {
                   onClick={() => setSelectedBooking(booking)}
                 >
                   <MapPin size={16} />
-                  {booking.status === "pending"
+                  {["pending", "confirmed", "vendor_accepted"].includes(booking.status)
                     ? "View Details"
                     : "Track Vendor"}
                 </button>
 
-                {booking.status === "pending" && (
+                {["pending", "confirmed"].includes(booking.status) && (
                   <button
                     className="btn-cancel"
                     onClick={() => handleCancelBooking(booking.id)}
@@ -510,6 +558,26 @@ const ClientDashboard = () => {
                     <XCircle size={16} />
                     Cancel
                   </button>
+                )}
+
+                {booking.status === "vendor_accepted" && (
+                  <>
+                    <button
+                      className="btn-accept" // Reusing verify/accept style
+                      style={{ background: '#dcfce7', color: '#166534' }}
+                      onClick={() => handleApproveVendor(booking.id)}
+                    >
+                      <CheckCircle size={16} />
+                      Approve
+                    </button>
+                    <button
+                      className="btn-cancel"
+                      onClick={() => handleRejectVendor(booking.id)}
+                    >
+                      <XCircle size={16} />
+                      Reject
+                    </button>
+                  </>
                 )}
               </div>
             </div>

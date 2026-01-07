@@ -8,11 +8,16 @@ from .views import (
     ContactInfoView,
     VerifyOTPView,
     VerifyPickupOTPView,
-    VerifyPickupOTPView,
     SendOTPView,
     VerifyAccountView,
     UserBookingsView,
     CancelPickupView,
+    AvailablePickupsView,
+    VendorPickupsView,
+    AcceptPickupView,
+    VendorCancelPickupView,
+    ApproveVendorView,
+    RejectVendorView,
 )
 
 urlpatterns = [
@@ -24,10 +29,20 @@ urlpatterns = [
     path("login/", CustomTokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     
-    # Pickup Flow
+    # Pickup Flow (Client)
     path("pickup/create/", CreatePickupView.as_view(), name="pickup_create"),
     path("pickup/list/", UserBookingsView.as_view(), name="pickup_list"),
     path("pickup/cancel/<int:pk>/", CancelPickupView.as_view(), name="pickup_cancel"),
     path("pickup/contact/", ContactInfoView.as_view(), name="pickup_contact"),
     path("pickup/verify-otp/", VerifyPickupOTPView.as_view(), name="pickup_verify_otp"),
+    
+    # Pickup Flow (Vendor)
+    path("pickup/available/", AvailablePickupsView.as_view(), name="pickup_available"),
+    path("pickup/vendor-list/", VendorPickupsView.as_view(), name="pickup_vendor_list"),
+    path("pickup/accept/<int:pk>/", AcceptPickupView.as_view(), name="pickup_accept"),
+    path("pickup/vendor-cancel/<int:pk>/", VendorCancelPickupView.as_view(), name="pickup_vendor_cancel"),
+
+    # Pickup Approval (Client)
+    path("pickup/approve/<int:pk>/", ApproveVendorView.as_view(), name="pickup_approve"),
+    path("pickup/reject/<int:pk>/", RejectVendorView.as_view(), name="pickup_reject"),
 ]

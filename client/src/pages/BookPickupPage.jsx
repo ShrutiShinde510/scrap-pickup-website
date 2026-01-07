@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Upload,
@@ -8,11 +8,16 @@ import {
   Package,
   DollarSign,
   CheckCircle,
+  Navigation
 } from "lucide-react";
 import { scrapCategories, cities, timeSlots } from "../data/scrapData";
 import { useAuth } from "../context/AuthContext";
 import api from "../api/axios";
 import "./BookPickupPage.css";
+import { useJsApiLoader, GoogleMap, Marker, Autocomplete } from "@react-google-maps/api";
+import toast from "react-hot-toast";
+
+const libraries = ["places"];
 
 const BookPickupPage = () => {
   const navigate = useNavigate();
@@ -30,19 +35,90 @@ const BookPickupPage = () => {
     pickupDate: "",
     timeSlot: "",
     additionalNotes: "",
+    latitude: null,
+    longitude: null,
   });
 
   const [estimatedPrice, setEstimatedPrice] = useState(null);
   const [bookingId, setBookingId] = useState(null);
   const [error, setError] = useState("");
 
+  const { isLoaded } = useJsApiLoader({
+    id: "google-map-script",
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
+    libraries: libraries,
+  });
+
+  const [map, setMap] = useState(null);
+  const autocompleteRef = useRef(null);
+  const [markerPosition, setMarkerPosition] = useState({ lat: 18.5204, lng: 73.8567 }); // Default Pune
+
   useEffect(() => {
     if (!user) {
       navigate("/login", {
         state: { redirectTo: "/book-pickup" },
       });
+    } else {
+      // Try getting current location
+      if (navigator.geolocation && !formData.latitude) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const pos = {
+              lat: position.coords.latitude,
+              lng: position.coords.longitude
+            };
+            setMarkerPosition(pos);
+            setFormData(prev => ({ ...prev, latitude: pos.lat, longitude: pos.lng }));
+          }
+        )
+      }
     }
   }, [user, navigate]);
+
+  const onLoad = React.useCallback(function callback(map) {
+    setMap(map);
+  }, []);
+
+  const onUnmount = React.useCallback(function callback(map) {
+    setMap(null);
+  }, []);
+
+  const onPlaceChanged = () => {
+    if (autocompleteRef.current !== null) {
+      const place = autocompleteRef.current.getPlace();
+      if (place.geometry && place.geometry.location) {
+        const location = {
+          lat: place.geometry.location.lat(),
+          lng: place.geometry.location.lng()
+        };
+        setMarkerPosition(location);
+        setFormData(prev => ({
+          ...prev,
+          address: place.formatted_address || prev.address,
+          latitude: location.lat,
+          longitude: location.lng,
+          // Try to extract city/pincode if possible (simplified here)
+        }));
+        map?.panTo(location);
+        map?.setZoom(17);
+      }
+    } else {
+      console.log('Autocomplete is not loaded yet!');
+    }
+  };
+
+  const onMarkerDragEnd = (e) => {
+    const newLat = e.latLng.lat();
+    const newLng = e.latLng.lng();
+    setMarkerPosition({ lat: newLat, lng: newLng });
+    setFormData(prev => ({
+      ...prev,
+      latitude: newLat,
+      longitude: newLng
+    }));
+    // Optional: Reverse geocode here to get address from new pin location
+  };
+
 
   const calculatePrice = () => {
     if (formData.scrapType && formData.quantity) {
@@ -67,7 +143,7 @@ const BookPickupPage = () => {
     const file = e.target.files[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
-        setError("Image size must be less than 5MB");
+        toast.error("Image size must be less than 5MB");
         return;
       }
       setFormData({ ...formData, scrapImage: file });
@@ -80,11 +156,11 @@ const BookPickupPage = () => {
 
     if (step === 1) {
       if (!formData.scrapType || !formData.quantity) {
-        setError("Please select scrap type and enter quantity");
+        toast.error("Please select scrap type and enter quantity");
         return false;
       }
       if (parseFloat(formData.quantity) <= 0) {
-        setError("Quantity must be greater than 0");
+        toast.error("Quantity must be greater than 0");
         return false;
       }
       calculatePrice();
@@ -93,11 +169,11 @@ const BookPickupPage = () => {
 
     if (step === 2) {
       if (!formData.address || !formData.city || !formData.pincode) {
-        setError("Please fill all address fields");
+        toast.error("Please fill all address fields");
         return false;
       }
       if (formData.pincode.length !== 6) {
-        setError("Please enter valid 6-digit pincode");
+        toast.error("Please enter valid 6-digit pincode");
         return false;
       }
       return true;
@@ -105,14 +181,14 @@ const BookPickupPage = () => {
 
     if (step === 3) {
       if (!formData.pickupDate || !formData.timeSlot) {
-        setError("Please select pickup date and time slot");
+        toast.error("Please select pickup date and time slot");
         return false;
       }
       const selectedDate = new Date(formData.pickupDate);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       if (selectedDate < today) {
-        setError("Pickup date cannot be in the past");
+        toast.error("Pickup date cannot be in the past");
         return false;
       }
       return true;
@@ -146,8 +222,9 @@ const BookPickupPage = () => {
       payload.append("city", formData.city);
       payload.append("pincode", formData.pincode);
       payload.append("landmark", formData.landmark);
-      payload.append("latitude", 0); // Placeholder if not using maps yet
-      payload.append("longitude", 0); // Placeholder
+      // Use state lat/lng if available, else 0 (or fallback)
+      payload.append("latitude", formData.latitude || 0);
+      payload.append("longitude", formData.longitude || 0);
       payload.append("date", formData.pickupDate);
       payload.append("time_slot", formData.timeSlot);
       if (formData.scrapImage) {
@@ -162,11 +239,18 @@ const BookPickupPage = () => {
       setCurrentStep(5);
     } catch (err) {
       console.error("Booking Error:", err);
-      setError(
+      toast.error(
         err.response?.data?.error ||
         "Failed to create booking. Please try again.",
       );
     }
+  };
+
+  const mapContainerStyle = {
+    width: '100%',
+    height: '300px',
+    marginTop: '15px',
+    borderRadius: '8px'
   };
 
   // Step 1: Scrap Details
@@ -182,8 +266,6 @@ const BookPickupPage = () => {
               <div className="progress-fill" style={{ width: "25%" }}></div>
             </div>
           </div>
-
-          {error && <div className="error-message">⚠️ {error}</div>}
 
           <div className="form-section">
             <div className="input-group">
@@ -281,10 +363,47 @@ const BookPickupPage = () => {
             </div>
           </div>
 
-          {error && <div className="error-message">⚠️ {error}</div>}
-
           <div className="form-section">
-            <div className="input-group">
+            {/* Map Search & Display */}
+            {isLoaded ? (
+              <div className="map-input-section">
+                <label>Search Address (or drag Pin below)</label>
+                <Autocomplete
+                  onLoad={(autocomplete) => autocompleteRef.current = autocomplete}
+                  onPlaceChanged={onPlaceChanged}
+                >
+                  <div className="search-box-wrapper">
+                    <input type="text" placeholder="Search your location..." className="text-input" style={{ paddingLeft: '35px' }} />
+                    <Navigation size={18} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#6b7280' }} />
+                  </div>
+                </Autocomplete>
+
+                <GoogleMap
+                  mapContainerStyle={mapContainerStyle}
+                  center={markerPosition}
+                  zoom={15}
+                  onLoad={onLoad}
+                  onUnmount={onUnmount}
+                  options={{
+                    disableDefaultUI: true,
+                    zoomControl: true,
+                  }}
+                >
+                  <Marker
+                    position={markerPosition}
+                    draggable={true}
+                    onDragEnd={onMarkerDragEnd}
+                    animation={window.google.maps.Animation.DROP}
+                  />
+                </GoogleMap>
+                <p className="helper-text-sm" style={{ marginTop: '5px', color: '#666' }}>
+                  📍 Drag the pin to pinpoint exact location
+                </p>
+              </div>
+            ) : (<div>Loading Map...</div>)}
+
+
+            <div className="input-group" style={{ marginTop: '20px' }}>
               <label>Complete Address *</label>
               <textarea
                 placeholder="House/Flat No., Building Name, Street"
@@ -376,8 +495,6 @@ const BookPickupPage = () => {
               <div className="progress-fill" style={{ width: "75%" }}></div>
             </div>
           </div>
-
-          {error && <div className="error-message">⚠️ {error}</div>}
 
           <div className="form-section">
             <div className="input-group">
@@ -522,55 +639,6 @@ const BookPickupPage = () => {
   }
 
   // Step 5: Success
-  /* if (currentStep === 5) {
-    return (
-      <div className="booking-page">
-        <div className="booking-container success-container">
-          <div className="success-icon">
-            <CheckCircle size={80} />
-          </div>
-          <h1 className="success-title">Booking Confirmed!</h1>
-          <p className="success-subtitle">Your scrap pickup has been scheduled successfully</p>
-
-          <div className="booking-id-card">
-            <h3>Booking ID</h3>
-            <p className="booking-id">{bookingId}</p>
-            <small>Save this ID for tracking your pickup</small>
-          </div>
-
-          <div className="success-details">
-            <div className="detail-item">
-              <Calendar size={20} />
-              <span>{new Date(formData.pickupDate).toLocaleDateString()}</span>
-            </div>
-            <div className="detail-item">
-              <Clock size={20} />
-              <span>{timeSlots.find(s => s.value === formData.timeSlot)?.label}</span>
-            </div>
-            <div className="detail-item">
-              <DollarSign size={20} />
-              <span>₹{estimatedPrice} (estimated)</span>
-            </div>
-          </div>
-
-          <div className="success-info">
-            <h4>What's Next?</h4>
-            <ul>
-              <li>✓ A vendor will be assigned to your booking</li>
-              <li>✓ You'll receive a confirmation email</li>
-              <li>✓ Vendor will arrive at scheduled time</li>
-              <li>✓ Payment after pickup completion</li>
-            </ul>
-          </div>
-
-          <button onClick={() => navigate('/')} className="btn-home">
-            Back to Home
-          </button>
-        </div>
-      </div>
-    );
-  }*/
-
   if (currentStep === 5) {
     return (
       <div className="booking-page">
@@ -619,7 +687,7 @@ const BookPickupPage = () => {
           <div className="success-actions">
             <button
               onClick={() => {
-                if (user?.role === "vendor") {
+                if (user?.is_seller) {
                   navigate("/vendor-dashboard");
                 } else {
                   navigate("/dashboard");
@@ -644,6 +712,8 @@ const BookPickupPage = () => {
                   pickupDate: "",
                   timeSlot: "",
                   additionalNotes: "",
+                  latitude: null,
+                  longitude: null,
                 });
                 setEstimatedPrice(null);
                 setBookingId(null);

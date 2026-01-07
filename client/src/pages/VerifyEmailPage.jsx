@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Mail, CheckCircle, ArrowRight } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
 import './VerifyEmailPage.css';
@@ -114,7 +115,7 @@ const VerifyEmailPage = () => {
       const updatedUser = res.data.user;
       updateUser(updatedUser);
 
-      alert('Account verified successfully!');
+      toast.success('Account verified successfully!');
       navigate(redirectTo, { replace: true });
 
     } catch (err) {

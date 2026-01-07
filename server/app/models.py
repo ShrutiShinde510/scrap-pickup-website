@@ -61,6 +61,8 @@ class PickupRequest(models.Model):
     STATUS_CHOICES = [
         ("pending", "Pending"),
         ("confirmed", "Confirmed"),
+        ("vendor_accepted", "Vendor Accepted"),
+        ("scheduled", "Scheduled"),
         ("completed", "Completed"),
         ("cancelled", "Cancelled"),
     ]

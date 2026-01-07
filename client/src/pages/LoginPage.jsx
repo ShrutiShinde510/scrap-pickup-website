@@ -1,64 +1,114 @@
-import React, { useState } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Eye, EyeOff, Mail, Lock, LogIn } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
+import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
+import { Eye, EyeOff, Mail, Lock, LogIn, Truck, User } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import './LoginPage.css';
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login } = useAuth();
+  const [searchParams] = useSearchParams();
+  const { login, isAuthenticated, user } = useAuth();
 
+  const initialRole = searchParams.get('role') || 'client';
 
   const [formData, setFormData] = useState({
     email: '',
-    password: ''
+    password: '',
+    role: initialRole
   });
 
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const isLoggingIn = React.useRef(false); // Track if we are currently submitting login
+
+  // Update role if query param changes (e.g. navigation)
+  useEffect(() => {
+    const roleParam = searchParams.get('role');
+    if (roleParam && (roleParam === 'client' || roleParam === 'vendor')) {
+      setFormData(prev => ({ ...prev, role: roleParam }));
+    }
+  }, [searchParams]);
+
+  // Redirect if already logged in and NOT currently logging in
+  React.useEffect(() => {
+    if (isAuthenticated && !isLoggingIn.current) {
+      // If user is already logged in, redirect them to home or dashboard
+      // using a safe default.
+      navigate('/');
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
 
     if (!formData.email || !formData.password) {
-      setError('Please fill all fields');
+      toast.error('Please fill all fields');
+      setError('Please fill all fields'); // Keep local error state for UI if needed, or remove
       return;
     }
 
     setIsLoading(true);
+    isLoggingIn.current = true; // Mark as active login attempt
     console.log("LoginPage: Attempting login for", formData.email);
     const res = await login(formData.email, formData.password);
     console.log("LoginPage: Login response", res);
     setIsLoading(false);
 
+    if (!res.success) {
+      isLoggingIn.current = false; // Reset if failed
+    }
+
     if (res.success) {
       console.log("LoginPage: Login success, redirecting...");
 
-      if (!res.user.is_phone_verified) {
+      const user = res.user;
+
+      // Role Validation
+      if (formData.role === 'client' && !user.is_client) {
+        toast.error('Access Denied: This account is not registered as a client.');
+        setError('Access Denied: This account is not registered as a client.');
+        setIsLoading(false);
+        return;
+      }
+      if (formData.role === 'vendor' && !user.is_seller) {
+        toast.error('Access Denied: This account is not registered as a vendor.');
+        setError('Access Denied: This account is not registered as a vendor.');
+        setIsLoading(false);
+        return;
+      }
+
+      if (!user.is_phone_verified) {
         console.log("LoginPage: User not verified, redirecting to /verify-email");
+        toast('Please verify your email/phone to continue.', { icon: '⚠️' });
         navigate('/verify-email');
         return;
       }
 
-      // Determine redirection
-      // If user is verified, go to redirectTo or Home
-      // If not, they might be redirected by ProtectedRoute later, or we can force it here.
-      // For now, go to the intended page.
-      const destination = location.state?.redirectTo || '/';
-      console.log("LoginPage: Destination:", destination);
-      navigate(destination, { replace: true });
+      // Store the active role intent
+      localStorage.setItem('userRole', formData.role);
+
+      toast.success('Login Successful!');
+      // Determine redirection based on role
+      if (formData.role === 'vendor') {
+        navigate('/vendor-dashboard', { replace: true });
+      } else {
+        navigate('/dashboard', { replace: true });
+      }
     } else {
       console.error("LoginPage: Login failed", res.error);
-      setError(res.error || 'Login failed');
+      const errorMsg = res.error || 'Login failed';
+      toast.error(errorMsg);
+      setError(errorMsg);
     }
   };
 
   const handleGoogleLogin = () => {
-    alert('Google Sign-In will be implemented with OAuth');
+    toast('Google Sign-In will be implemented with OAuth', { icon: 'ℹ️' });
   };
 
   return (
@@ -103,6 +153,25 @@ const LoginPage = () => {
             )}
 
             <form onSubmit={handleLogin} className="auth-form">
+              <div className="role-selector">
+                <button
+                  type="button"
+                  className={`role-btn ${formData.role === 'client' ? 'active' : ''}`}
+                  onClick={() => setFormData({ ...formData, role: 'client' })}
+                >
+                  <User size={18} />
+                  Client Login
+                </button>
+                <button
+                  type="button"
+                  className={`role-btn ${formData.role === 'vendor' ? 'active' : ''}`}
+                  onClick={() => setFormData({ ...formData, role: 'vendor' })}
+                >
+                  <Truck size={18} />
+                  Vendor Login
+                </button>
+              </div>
+
               <div className="input-group">
                 <label>Email Address</label>
                 <div className="input-wrapper">
@@ -117,17 +186,12 @@ const LoginPage = () => {
                 </div>
               </div>
 
-
-
-
-
-
               <div className="input-group">
                 <label>Password</label>
                 <div className="input-wrapper">
                   <Lock size={20} className="input-icon" />
                   <input
-                    type={showPassword ? "text" : "password"}
+                    type="password"
                     placeholder="Enter your password"
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}

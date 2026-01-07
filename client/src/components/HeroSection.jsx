@@ -22,26 +22,6 @@ const HeroSection = ({ onRegisterClick }) => {
           >
             Book Pickup Now
           </button>
-
-          {isAuthenticated && (
-            <>
-              <button
-                onClick={() => navigate("/dashboard")}
-                className="btn-client-dashboard"
-              >
-                <LayoutDashboard size={20} />
-                Client Dashboard
-              </button>
-
-              <button
-                onClick={() => navigate("/vendor-dashboard")}
-                className="btn-vendor-dashboard"
-              >
-                <Truck size={20} />
-                Vendor Dashboard
-              </button>
-            </>
-          )}
         </div>
       </div>
     </section>

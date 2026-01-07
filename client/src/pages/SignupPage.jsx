@@ -10,14 +10,27 @@ import {
   MapPin,
   UserPlus,
   Upload,
-  CheckCircle,
   Loader2,
+  Briefcase,
+  Recycle,
+  ArrowRight,
 } from "lucide-react";
+import toast from "react-hot-toast";
 import api from "../api/axios";
 import "./SignupPage.css";
 
 const SignupPage = () => {
   const navigate = useNavigate();
+  const { register, isAuthenticated } = useAuth();
+  const [userType, setUserType] = useState(null); // 'client' or 'vendor'
+  const isSigningUp = React.useRef(false);
+
+  // Redirect if already logged in and not currently signing up
+  useEffect(() => {
+    if (isAuthenticated && !isSigningUp.current) {
+      navigate("/");
+    }
+  }, [isAuthenticated, navigate]);
   const [step, setStep] = useState(1);
   const [otp, setOtp] = useState("");
 
@@ -109,15 +122,18 @@ const SignupPage = () => {
           });
 
           if (response.data.mock_otp) {
-            alert(
-              `Email OTP sent to ${formData.email}\n\nDEMO OTP: ${response.data.mock_otp}`,
-            );
+            toast.success(`Email OTP sent! DEMO: ${response.data.mock_otp}`, {
+              duration: 6000,
+              icon: "📧",
+            });
           } else {
-            alert(`Email OTP sent to ${formData.email}`);
+            toast.success(`Email OTP sent to ${formData.email}`);
           }
           setStep(2); // Go to Email OTP Step
         } catch (err) {
-          setError(err.response?.data?.error || "Failed to send OTP.");
+          const msg = err.response?.data?.error || "Failed to send OTP.";
+          toast.error(msg);
+          setError(msg);
         } finally {
           setIsLoading(false);
         }
@@ -126,7 +142,7 @@ const SignupPage = () => {
     // Step 2 (Email OTP) -> Step 3 (Password/Docs)
     else if (step === 2) {
       if (isEmailVerified) setStep(3);
-      else setError("Please verify Email OTP first");
+      else toast.error("Please verify Email OTP first");
     }
     // Step 3 (Password/Docs) -> Step 4 (Phone OTP)
     else if (step === 3) {
@@ -139,137 +155,87 @@ const SignupPage = () => {
   const verifyPhoneAndProceed = async () => {
     setIsLoading(true);
     try {
-      const response = await api.post('/otp/send/', {
+      const response = await api.post("/otp/send/", {
         contact: formData.phone,
-        channel: 'sms'
+        channel: "sms",
       });
 
       if (response.data.mock_otp) {
-        alert(`Phone OTP sent to ${formData.phone}\n\nDEMO OTP: ${response.data.mock_otp}`);
+        toast.success(`Phone OTP sent! DEMO: ${response.data.mock_otp}`, {
+          duration: 6000,
+          icon: "📱",
+        });
       } else {
-        alert(`Phone OTP sent to ${formData.phone}`);
+        toast.success(`Phone OTP sent to ${formData.phone}`);
       }
       setStep(4); // Go to Phone OTP Step
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to send Phone OTP.');
+      const msg = err.response?.data?.error || "Failed to send Phone OTP.";
+      toast.error(msg);
+      setError(msg);
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleEmailOtpVerify = async () => {
-    const enteredOtp = emailOtp.join('');
+    const enteredOtp = emailOtp.join("");
     if (enteredOtp.length < 6) {
-      setError('Please enter complete 6-digit OTP');
+      toast.error("Please enter complete 6-digit OTP");
       return;
     }
     setIsLoading(true);
     try {
-      await api.post('/otp/verify/', {
+      await api.post("/otp/verify/", {
         contact: formData.email,
-        otp: enteredOtp
+        otp: enteredOtp,
       });
       setIsEmailVerified(true);
-      setError('');
-      alert('✅ Email verified successfully!');
+      setError("");
+      toast.success("Email verified successfully!");
 
       // Auto proceed to Password/Docs
       setStep(3);
-
     } catch (err) {
-      setError(err.response?.data?.error || 'Invalid Email OTP');
-      setEmailOtp(['', '', '', '', '', '']);
+      const msg = err.response?.data?.error || "Invalid Email OTP";
+      toast.error(msg);
+      setError(msg);
+      setEmailOtp(["", "", "", "", "", ""]);
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleOtpVerifyAndRegister = async () => {
-    const enteredOtp = phoneOtp.join('');
+    const enteredOtp = phoneOtp.join("");
     if (enteredOtp.length < 6) {
-      setError('Please enter complete 6-digit OTP');
+      toast.error("Please enter complete 6-digit OTP");
       return;
     }
     setIsLoading(true);
     try {
       // 1. Verify Phone OTP
-      await api.post('/otp/verify/', {
+      await api.post("/otp/verify/", {
         contact: formData.phone,
-        otp: enteredOtp
+        otp: enteredOtp,
       });
       setIsOtpVerified(true);
 
       // 2. Submit Registration
       await handleSignupInternal();
-
     } catch (err) {
-      setError(err.response?.data?.error || 'Invalid OTP');
-      setPhoneOtp(['', '', '', '', '', '']);
+      const msg = err.response?.data?.error || "Invalid OTP";
+      toast.error(msg);
+      setError(msg);
+      setPhoneOtp(["", "", "", "", "", ""]);
       setIsLoading(false); // Only stop loading if error, otherwise handleSignupInternal handles it/redirects
-    }
-  };
-
-  const handleOtpChange = (index, value, type) => {
-    if (value.length > 1) value = value[0];
-    if (!/^\d*$/.test(value)) return;
-
-    if (type === "email") {
-      const newOtp = [...emailOtp];
-      newOtp[index] = value;
-      setEmailOtp(newOtp);
-      if (value && index < 5)
-        document.getElementById(`email-otp-${index + 1}`)?.focus();
-    } else {
-      const newOtp = [...phoneOtp];
-      newOtp[index] = value;
-      setPhoneOtp(newOtp);
-      if (value && index < 5)
-        document.getElementById(`otp-${index + 1}`)?.focus();
-    }
-  };
-
-  const handleOtpKeyDown = (index, e, type) => {
-    if (e.key === "Backspace") {
-      if (type === "email" && !emailOtp[index] && index > 0) {
-        document.getElementById(`email-otp-${index - 1}`)?.focus();
-      } else if (type === "phone" && !phoneOtp[index] && index > 0) {
-        document.getElementById(`otp-${index - 1}`)?.focus();
-      }
     }
   };
 
   const handleSignupInternal = async () => {
     try {
-      const formDataToSend = new FormData();
-      formDataToSend.append('email', formData.email);
-      formDataToSend.append('password', formData.password);
-      formDataToSend.append('full_name', formData.fullName);
-      formDataToSend.append('phone_number', formData.phone);
-      formDataToSend.append('address', formData.address);
-      formDataToSend.append('city', formData.city);
-
-      if (formData.document) {
-        formDataToSend.append('id_proof', formData.document);
-      }
-
-      await api.post('/register/client/', formDataToSend, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        }
-      });
-
-      alert('Account created! Please login.');
-      navigate('/login');
-    } catch (err) {
-      if (err.response && err.response.data) {
-        const errorMsg = Object.values(err.response.data).flat().join(', ');
-        setError(errorMsg || 'Registration failed. Please try again.');
-        setIsLoading(false);
-      } else {
-        setError('Registration failed. Please try again.');
-        setIsLoading(false);
-      }
-    }
+      setIsLoading(false);
+    } catch (err) {}
   };
 
   return (
@@ -307,7 +273,9 @@ const SignupPage = () => {
             <div className="progress-line"></div>
 
             <div className="progress-step">
-              <div className={`step-circle ${step >= 3 ? 'active' : ''}`}>3</div>
+              <div className={`step-circle ${step >= 3 ? "active" : ""}`}>
+                3
+              </div>
               <div className="step-info">
                 <h4>Security</h4>
                 <p>Password & Docs</p>
@@ -317,7 +285,9 @@ const SignupPage = () => {
             <div className="progress-line"></div>
 
             <div className="progress-step">
-              <div className={`step-circle ${step >= 4 ? 'active' : ''}`}>4</div>
+              <div className={`step-circle ${step >= 4 ? "active" : ""}`}>
+                4
+              </div>
               <div className="step-info">
                 <h4>Phone</h4>
                 <p>Verify & Create</p>
@@ -340,331 +310,430 @@ const SignupPage = () => {
               </div>
             )}
 
-            <form onSubmit={(e) => e.preventDefault()} className="auth-form">
-              {step === 1 ? (
-                <>
-                  <div className="input-group">
-                    <label>Full Name *</label>
-                    <div className="input-wrapper">
-                      <User size={20} className="input-icon" />
-                      <input
-                        type="text"
-                        value={formData.fullName}
-                        onChange={(e) =>
-                          setFormData({ ...formData, fullName: e.target.value })
-                        }
-                      />
-                    </div>
+            {!userType ? (
+              <div className="role-selection-container">
+                <h3>I want to...</h3>
+
+                <div
+                  className="role-card"
+                  onClick={() => setUserType("client")}
+                >
+                  <div className="role-icon-wrapper client">
+                    <Recycle size={32} />
                   </div>
-
-                  <div className="input-group">
-                    <label>Email Address *</label>
-                    <div className="input-wrapper">
-                      <Mail size={20} className="input-icon" />
-                      <input
-                        type="email"
-                        value={formData.email}
-                        onChange={(e) =>
-                          setFormData({ ...formData, email: e.target.value })
-                        }
-                      />
-                    </div>
+                  <div className="role-content">
+                    <h4>Sell Scrap</h4>
+                    <p>Schedule pickups & earn from your waste</p>
                   </div>
+                  <ArrowRight size={20} className="role-arrow" />
+                </div>
 
-                  <div className="input-group">
-                    <label>Phone Number *</label>
-                    <div className="input-wrapper">
-                      <Phone size={20} className="input-icon" />
-                      <input
-                        type="tel"
-                        value={formData.phone}
-                        onChange={(e) =>
-                          setFormData({ ...formData, phone: e.target.value })
-                        }
-                      />
-                    </div>
+                <div
+                  className="role-card"
+                  onClick={() => navigate("/vendor-registration")}
+                >
+                  <div className="role-icon-wrapper vendor">
+                    <Briefcase size={32} />
                   </div>
-
-                  <div className="input-group">
-                    <label>Address *</label>
-                    <div className="input-wrapper">
-                      <MapPin size={20} className="input-icon" />
-                      <input
-                        type="text"
-                        value={formData.address}
-                        onChange={(e) =>
-                          setFormData({ ...formData, address: e.target.value })
-                        }
-                      />
-                    </div>
+                  <div className="role-content">
+                    <h4>Become a Vendor</h4>
+                    <p>Collect scrap & grow your business</p>
                   </div>
-
-                  <div className="input-group">
-                    <label>City *</label>
-                    <select
-                      className="select-input"
-                      value={formData.city}
-                      onChange={(e) =>
-                        setFormData({ ...formData, city: e.target.value })
-                      }
-                    >
-                      <option value="">Select City</option>
-                      <option>Mumbai</option>
-                      <option>Delhi</option>
-                      <option>Bangalore</option>
-                      <option>Pune</option>
-                      <option>Hyderabad</option>
-                      <option>Chennai</option>
-                      <option>Kolkata</option>
-                    </select>
-                  </div>
-
-                  <button
-                    type="button"
-                    className="btn-next"
-                    onClick={handleNextStep}
-                    disabled={isLoading}
-                  >
-                    {isLoading ? (
-                      <Loader2 className="animate-spin" />
-                    ) : (
-                      "Next: Verify Email →"
-                    )}
-                  </button>
-                </>
-              ) : step === 2 ? (
-                <>
-                  <div className="otp-section">
-                    <h3>Verify Email Address</h3>
-                    <p>
-                      We've sent a code to <strong>{formData.email}</strong>
-                    </p>
-
-                    <div
-                      className="code-input-group"
-                      style={{
-                        display: "flex",
-                        gap: "10px",
-                        justifyContent: "center",
-                        margin: "20px 0",
-                      }}
-                    >
-                      {emailOtp.map((digit, index) => (
+                  <ArrowRight size={20} className="role-arrow" />
+                </div>
+              </div>
+            ) : (
+              <form onSubmit={(e) => e.preventDefault()} className="auth-form">
+                {step === 1 ? (
+                  <>
+                    <div className="input-group">
+                      <label>Full Name *</label>
+                      <div className="input-wrapper">
+                        <User size={20} className="input-icon" />
                         <input
-                          key={index}
-                          id={`email-otp-${index}`}
                           type="text"
-                          maxLength="1"
-                          value={digit}
+                          value={formData.fullName}
                           onChange={(e) =>
-                            handleOtpChange(index, e.target.value, "email")
+                            setFormData({
+                              ...formData,
+                              fullName: e.target.value,
+                            })
                           }
-                          onKeyDown={(e) => handleOtpKeyDown(index, e, "email")}
-                          className="code-input"
-                          style={{
-                            width: "40px",
-                            height: "40px",
-                            textAlign: "center",
-                            fontSize: "1.2rem",
-                            borderRadius: "8px",
-                            border: "1px solid #ddd",
-                          }}
-                          disabled={isLoading}
                         />
-                      ))}
-                    </div>
-
-                    <button
-                      type="button"
-                      className="btn-verify"
-                      onClick={handleEmailOtpVerify}
-                      disabled={isLoading}
-                      style={{
-                        width: "100%",
-                        padding: "12px",
-                        background: "#2ecc71",
-                        color: "white",
-                        border: "none",
-                        borderRadius: "8px",
-                        cursor: "pointer",
-                        fontSize: "1rem",
-                      }}
-                    >
-                      {isLoading ? "Verifying..." : "Verify Email"}
-                    </button>
-
-                    <button
-                      type="button"
-                      className="btn-back"
-                      onClick={() => setStep(1)}
-                      style={{
-                        marginTop: "10px",
-                        background: "transparent",
-                        color: "#666",
-                        border: "none",
-                        cursor: "pointer",
-                        textDecoration: "underline",
-                      }}
-                    >
-                      ← Change Contact Info
-                    </button>
-                  </div>
-                </>
-              ) : step === 3 ? (
-                <>
-                  <div className="input-group">
-                    <label>Upload Verification Document *</label>
-
-                    <div className="document-upload-box">
-                      <input
-                        type="file"
-                        accept=".jpg,.jpeg,.png,.pdf"
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            document: e.target.files[0],
-                          })
-                        }
-                      />
-
-                      <div className="document-upload-content">
-                        <Upload size={26} />
-                        <p>
-                          Upload <b>Aadhaar Card</b> or <b>PAN Card</b>
-                        </p>
-
-                        {formData.document ? (
-                          <span className="file-name">
-                            📄 {formData.document.name}
-                          </span>
-                        ) : (
-                          <span>PDF / JPG / PNG (Max 2MB)</span>
-                        )}
                       </div>
                     </div>
-                  </div>
 
-                  <div className="input-group">
-                    <label>Create Password *</label>
-                    <div className="input-wrapper">
-                      <Lock size={20} className="input-icon" />
-                      <input
-                        type={showPassword ? "text" : "password"}
-                        value={formData.password}
-                        onChange={(e) =>
-                          setFormData({ ...formData, password: e.target.value })
-                        }
-                      />
-                      <button
-                        type="button"
-                        className="toggle-password"
-                        onClick={() => setShowPassword(!showPassword)}
-                      >
-                        {showPassword ? (
-                          <EyeOff size={20} />
-                        ) : (
-                          <Eye size={20} />
-                        )}
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="input-group">
-                    <label>Confirm Password *</label>
-                    <div className="input-wrapper">
-                      <Lock size={20} className="input-icon" />
-                      <input
-                        type={showConfirmPassword ? "text" : "password"}
-                        value={formData.confirmPassword}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            confirmPassword: e.target.value,
-                          })
-                        }
-                      />
-                      <button
-                        type="button"
-                        className="toggle-password"
-                        onClick={() =>
-                          setShowConfirmPassword(!showConfirmPassword)
-                        }
-                      >
-                        {showConfirmPassword ? (
-                          <EyeOff size={20} />
-                        ) : (
-                          <Eye size={20} />
-                        )}
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="terms-box">
-                    <label className="checkbox-label">
-                      <input
-                        type="checkbox"
-                        checked={formData.agreeTerms}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            agreeTerms: e.target.checked,
-                          })
-                        }
-                      />
-                      <span>I agree to Terms & Conditions</span>
-                    </label>
-                  </div>
-
-                  <div className="button-group">
-                    <button type="button" className="btn-back" onClick={() => setStep(2)}>
-                      ← Back
-                    </button>
-                    <button type="button" className="btn-submit" onClick={handleNextStep} disabled={isLoading}>
-                      {isLoading ? <Loader2 className="animate-spin" /> : 'Next: Verify Phone →'}
-                    </button>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="otp-section">
-                    <h3>Verify Phone Number & Register</h3>
-                    <p>We've sent a code to <strong>{formData.phone}</strong></p>
-
-                    <div className="code-input-group" style={{ display: 'flex', gap: '10px', justifyContent: 'center', margin: '20px 0' }}>
-                      {phoneOtp.map((digit, index) => (
+                    <div className="input-group">
+                      <label>Email Address *</label>
+                      <div className="input-wrapper">
+                        <Mail size={20} className="input-icon" />
                         <input
-                          key={index}
-                          id={`otp-${index}`}
-                          type="text"
-                          maxLength="1"
-                          value={digit}
-                          onChange={(e) => handleOtpChange(index, e.target.value, 'phone')}
-                          onKeyDown={(e) => handleOtpKeyDown(index, e, 'phone')}
-                          className="code-input"
-                          style={{
-                            width: '40px',
-                            height: '40px',
-                            textAlign: 'center',
-                            fontSize: '1.2rem',
-                            borderRadius: '8px',
-                            border: '1px solid #ddd'
-                          }}
-                          disabled={isLoading}
+                          type="email"
+                          value={formData.email}
+                          onChange={(e) =>
+                            setFormData({ ...formData, email: e.target.value })
+                          }
                         />
-                      ))}
+                      </div>
                     </div>
 
-                    <button type="button" className="btn-verify" onClick={handleOtpVerifyAndRegister} disabled={isLoading} style={{ width: '100%', padding: '12px', background: '#2ecc71', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '1rem' }}>
-                      {isLoading ? 'Verifying...' : 'Verify & Create Account'}
-                    </button>
+                    <div className="input-group">
+                      <label>Phone Number *</label>
+                      <div className="input-wrapper">
+                        <Phone size={20} className="input-icon" />
+                        <input
+                          type="tel"
+                          value={formData.phone}
+                          onChange={(e) =>
+                            setFormData({ ...formData, phone: e.target.value })
+                          }
+                        />
+                      </div>
+                    </div>
 
-                    <button type="button" className="btn-back" onClick={() => setStep(3)} style={{ marginTop: '10px', background: 'transparent', color: '#666', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>
-                      ← Back
+                    <div className="input-group">
+                      <label>Address *</label>
+                      <div className="input-wrapper">
+                        <MapPin size={20} className="input-icon" />
+                        <input
+                          type="text"
+                          value={formData.address}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              address: e.target.value,
+                            })
+                          }
+                        />
+                      </div>
+                    </div>
+
+                    <div className="input-group">
+                      <label>City *</label>
+                      <select
+                        className="select-input"
+                        value={formData.city}
+                        onChange={(e) =>
+                          setFormData({ ...formData, city: e.target.value })
+                        }
+                      >
+                        <option value="">Select City</option>
+                        <option>Mumbai</option>
+                        <option>Delhi</option>
+                        <option>Bangalore</option>
+                        <option>Pune</option>
+                        <option>Hyderabad</option>
+                        <option>Chennai</option>
+                        <option>Kolkata</option>
+                      </select>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="btn-next"
+                      onClick={handleNextStep}
+                      disabled={isLoading}
+                    >
+                      {isLoading ? (
+                        <Loader2 className="animate-spin" />
+                      ) : (
+                        "Next: Verify Email →"
+                      )}
                     </button>
-                  </div>
-                </>
-              )}
-            </form>
+                  </>
+                ) : step === 2 ? (
+                  <>
+                    <div className="otp-section">
+                      <h3>Verify Email Address</h3>
+                      <p>
+                        We've sent a code to <strong>{formData.email}</strong>
+                      </p>
+
+                      <div
+                        className="code-input-group"
+                        style={{
+                          display: "flex",
+                          gap: "10px",
+                          justifyContent: "center",
+                          margin: "20px 0",
+                        }}
+                      >
+                        {emailOtp.map((digit, index) => (
+                          <input
+                            key={index}
+                            id={`email-otp-${index}`}
+                            type="text"
+                            maxLength="1"
+                            value={digit}
+                            onChange={(e) =>
+                              handleOtpChange(index, e.target.value, "email")
+                            }
+                            onKeyDown={(e) =>
+                              handleOtpKeyDown(index, e, "email")
+                            }
+                            className="code-input"
+                            style={{
+                              width: "40px",
+                              height: "40px",
+                              textAlign: "center",
+                              fontSize: "1.2rem",
+                              borderRadius: "8px",
+                              border: "1px solid #ddd",
+                            }}
+                            disabled={isLoading}
+                          />
+                        ))}
+                      </div>
+
+                      <button
+                        type="button"
+                        className="btn-verify"
+                        onClick={handleEmailOtpVerify}
+                        disabled={isLoading}
+                        style={{
+                          width: "100%",
+                          padding: "12px",
+                          background: "#2ecc71",
+                          color: "white",
+                          border: "none",
+                          borderRadius: "8px",
+                          cursor: "pointer",
+                          fontSize: "1rem",
+                        }}
+                      >
+                        {isLoading ? "Verifying..." : "Verify Email"}
+                      </button>
+
+                      <button
+                        type="button"
+                        className="btn-back"
+                        onClick={() => setStep(1)}
+                        style={{
+                          marginTop: "10px",
+                          background: "transparent",
+                          color: "#666",
+                          border: "none",
+                          cursor: "pointer",
+                          textDecoration: "underline",
+                        }}
+                      >
+                        ← Change Contact Info
+                      </button>
+                    </div>
+                  </>
+                ) : step === 3 ? (
+                  <>
+                    <div className="input-group">
+                      <label>Upload Verification Document *</label>
+
+                      <div className="document-upload-box">
+                        <input
+                          type="file"
+                          accept=".jpg,.jpeg,.png,.pdf"
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              document: e.target.files[0],
+                            })
+                          }
+                        />
+
+                        <div className="document-upload-content">
+                          <Upload size={26} />
+                          <p>
+                            Upload <b>Aadhaar Card</b> or <b>PAN Card</b>
+                          </p>
+
+                          {formData.document ? (
+                            <span className="file-name">
+                              📄 {formData.document.name}
+                            </span>
+                          ) : (
+                            <span>PDF / JPG / PNG (Max 2MB)</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="input-group">
+                      <label>Create Password *</label>
+                      <div className="input-wrapper">
+                        <Lock size={20} className="input-icon" />
+                        <input
+                          type={showPassword ? "text" : "password"}
+                          value={formData.password}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              password: e.target.value,
+                            })
+                          }
+                        />
+                        <button
+                          type="button"
+                          className="toggle-password"
+                          onClick={() => setShowPassword(!showPassword)}
+                        >
+                          {showPassword ? (
+                            <EyeOff size={20} />
+                          ) : (
+                            <Eye size={20} />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="input-group">
+                      <label>Confirm Password *</label>
+                      <div className="input-wrapper">
+                        <Lock size={20} className="input-icon" />
+                        <input
+                          type={showConfirmPassword ? "text" : "password"}
+                          value={formData.confirmPassword}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              confirmPassword: e.target.value,
+                            })
+                          }
+                        />
+                        <button
+                          type="button"
+                          className="toggle-password"
+                          onClick={() =>
+                            setShowConfirmPassword(!showConfirmPassword)
+                          }
+                        >
+                          {showConfirmPassword ? (
+                            <EyeOff size={20} />
+                          ) : (
+                            <Eye size={20} />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="terms-box">
+                      <label className="checkbox-label">
+                        <input
+                          type="checkbox"
+                          checked={formData.agreeTerms}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              agreeTerms: e.target.checked,
+                            })
+                          }
+                        />
+                        <span>I agree to Terms & Conditions</span>
+                      </label>
+                    </div>
+
+                    <div className="button-group">
+                      <button
+                        type="button"
+                        className="btn-back"
+                        onClick={() => setStep(2)}
+                      >
+                        ← Back
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-submit"
+                        onClick={handleNextStep}
+                        disabled={isLoading}
+                      >
+                        {isLoading ? (
+                          <Loader2 className="animate-spin" />
+                        ) : (
+                          "Next: Verify Phone →"
+                        )}
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="otp-section">
+                      <h3>Verify Phone Number & Register</h3>
+                      <p>
+                        We've sent a code to <strong>{formData.phone}</strong>
+                      </p>
+
+                      <div
+                        className="code-input-group"
+                        style={{
+                          display: "flex",
+                          gap: "10px",
+                          justifyContent: "center",
+                          margin: "20px 0",
+                        }}
+                      >
+                        {phoneOtp.map((digit, index) => (
+                          <input
+                            key={index}
+                            id={`otp-${index}`}
+                            type="text"
+                            maxLength="1"
+                            value={digit}
+                            onChange={(e) =>
+                              handleOtpChange(index, e.target.value, "phone")
+                            }
+                            onKeyDown={(e) =>
+                              handleOtpKeyDown(index, e, "phone")
+                            }
+                            className="code-input"
+                            style={{
+                              width: "40px",
+                              height: "40px",
+                              textAlign: "center",
+                              fontSize: "1.2rem",
+                              borderRadius: "8px",
+                              border: "1px solid #ddd",
+                            }}
+                            disabled={isLoading}
+                          />
+                        ))}
+                      </div>
+
+                      <button
+                        type="button"
+                        className="btn-verify"
+                        onClick={handleOtpVerifyAndRegister}
+                        disabled={isLoading}
+                        style={{
+                          width: "100%",
+                          padding: "12px",
+                          background: "#2ecc71",
+                          color: "white",
+                          border: "none",
+                          borderRadius: "8px",
+                          cursor: "pointer",
+                          fontSize: "1rem",
+                        }}
+                      >
+                        {isLoading ? "Verifying..." : "Verify & Create Account"}
+                      </button>
+
+                      <button
+                        type="button"
+                        className="btn-back"
+                        onClick={() => setStep(3)}
+                        style={{
+                          marginTop: "10px",
+                          background: "transparent",
+                          color: "#666",
+                          border: "none",
+                          cursor: "pointer",
+                          textDecoration: "underline",
+                        }}
+                      >
+                        ← Back
+                      </button>
+                    </div>
+                  </>
+                )}
+              </form>
+            )}
 
             <p className="auth-footer">
               Already have an account?
