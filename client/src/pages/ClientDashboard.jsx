@@ -111,16 +111,57 @@ const ClientDashboard = () => {
   };
 
   const handleCancelBooking = async (bookingId) => {
-    if (!confirm("Are you sure you want to cancel this booking?")) return;
-
-    try {
-      await api.post(`pickup/cancel/${bookingId}/`);
-      loadBookings();
-      toast.success("Booking cancelled successfully");
-    } catch (err) {
-      console.error("Cancel Error:", err);
-      toast.error("Failed to cancel booking");
-    }
+    toast((t) => (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <span>Are you sure you want to cancel this booking?</span>
+        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+          <button
+            onClick={() => {
+              toast.dismiss(t.id);
+              api.post(`pickup/cancel/${bookingId}/`)
+                .then(() => {
+                  loadBookings();
+                  toast.success("Booking cancelled successfully");
+                })
+                .catch((err) => {
+                  console.error("Cancel Error:", err);
+                  toast.error("Failed to cancel booking");
+                });
+            }}
+            style={{
+              background: '#ef4444',
+              color: 'white',
+              border: 'none',
+              padding: '6px 12px',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '14px'
+            }}
+          >
+            Yes, Cancel
+          </button>
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            style={{
+              background: '#e5e7eb',
+              color: '#374151',
+              border: 'none',
+              padding: '6px 12px',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '14px'
+            }}
+          >
+            No
+          </button>
+        </div>
+      </div>
+    ), {
+      duration: 5000,
+      style: {
+        minWidth: '300px'
+      }
+    });
   };
 
   const handleApproveVendor = async (bookingId) => {
@@ -135,15 +176,57 @@ const ClientDashboard = () => {
   };
 
   const handleRejectVendor = async (bookingId) => {
-    if (!confirm("Are you sure you want to reject this vendor? The request will go back to the pool.")) return;
-    try {
-      await api.post(`/pickup/reject/${bookingId}/`);
-      toast.success("Vendor rejected. Searching for another...");
-      loadBookings();
-    } catch (err) {
-      console.error("Reject Error:", err);
-      toast.error(err.response?.data?.error || "Failed to reject vendor");
-    }
+    toast((t) => (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <span>Reject this vendor? The request will go back to the pool.</span>
+        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+          <button
+            onClick={() => {
+              toast.dismiss(t.id);
+              api.post(`/pickup/reject/${bookingId}/`)
+                .then(() => {
+                  toast.success("Vendor rejected. Searching for another...");
+                  loadBookings();
+                })
+                .catch((err) => {
+                  console.error("Reject Error:", err);
+                  toast.error(err.response?.data?.error || "Failed to reject vendor");
+                });
+            }}
+            style={{
+              background: '#ef4444',
+              color: 'white',
+              border: 'none',
+              padding: '6px 12px',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '14px'
+            }}
+          >
+            Yes, Reject
+          </button>
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            style={{
+              background: '#e5e7eb',
+              color: '#374151',
+              border: 'none',
+              padding: '6px 12px',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '14px'
+            }}
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    ), {
+      duration: 5000,
+      style: {
+        minWidth: '300px'
+      }
+    });
   };
 
   const openVendorLocation = (booking) => {
@@ -160,6 +243,7 @@ const ClientDashboard = () => {
   const { isLoaded } = useJsApiLoader({
     id: "google-map-script",
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
+    libraries: ["places"],
   });
 
   const [map, setMap] = React.useState(null);
@@ -688,10 +772,51 @@ const ClientDashboard = () => {
           <button
             className="btn-danger"
             onClick={() => {
-              if (confirm("Are you sure you want to logout?")) {
-                logout();
-                navigate("/");
-              }
+              toast((t) => (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <span>Are you sure you want to logout?</span>
+                  <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                    <button
+                      onClick={() => {
+                        toast.dismiss(t.id);
+                        logout();
+                        navigate("/");
+                        toast.success("Logged out successfully");
+                      }}
+                      style={{
+                        background: '#ef4444',
+                        color: 'white',
+                        border: 'none',
+                        padding: '6px 12px',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontSize: '14px'
+                      }}
+                    >
+                      Yes, Logout
+                    </button>
+                    <button
+                      onClick={() => toast.dismiss(t.id)}
+                      style={{
+                        background: '#e5e7eb',
+                        color: '#374151',
+                        border: 'none',
+                        padding: '6px 12px',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontSize: '14px'
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ), {
+                duration: 5000,
+                style: {
+                  minWidth: '300px'
+                }
+              });
             }}
           >
             Logout

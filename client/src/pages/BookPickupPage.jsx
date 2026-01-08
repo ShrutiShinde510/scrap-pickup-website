@@ -59,7 +59,6 @@ const BookPickupPage = () => {
         state: { redirectTo: "/book-pickup" },
       });
     } else {
-      // Try getting current location
       if (navigator.geolocation && !formData.latitude) {
         navigator.geolocation.getCurrentPosition(
           (position) => {
@@ -97,7 +96,6 @@ const BookPickupPage = () => {
           address: place.formatted_address || prev.address,
           latitude: location.lat,
           longitude: location.lng,
-          // Try to extract city/pincode if possible (simplified here)
         }));
         map?.panTo(location);
         map?.setZoom(17);
@@ -116,7 +114,6 @@ const BookPickupPage = () => {
       latitude: newLat,
       longitude: newLng
     }));
-    // Optional: Reverse geocode here to get address from new pin location
   };
 
 
@@ -222,7 +219,6 @@ const BookPickupPage = () => {
       payload.append("city", formData.city);
       payload.append("pincode", formData.pincode);
       payload.append("landmark", formData.landmark);
-      // Use state lat/lng if available, else 0 (or fallback)
       payload.append("latitude", formData.latitude || 0);
       payload.append("longitude", formData.longitude || 0);
       payload.append("date", formData.pickupDate);
@@ -253,7 +249,6 @@ const BookPickupPage = () => {
     borderRadius: '8px'
   };
 
-  // Step 1: Scrap Details
   if (currentStep === 1) {
     return (
       <div className="booking-page">
@@ -349,7 +344,6 @@ const BookPickupPage = () => {
     );
   }
 
-  // Step 2: Address Details
   if (currentStep === 2) {
     return (
       <div className="booking-page">
@@ -364,7 +358,6 @@ const BookPickupPage = () => {
           </div>
 
           <div className="form-section">
-            {/* Map Search & Display */}
             {isLoaded ? (
               <div className="map-input-section">
                 <label>Search Address (or drag Pin below)</label>

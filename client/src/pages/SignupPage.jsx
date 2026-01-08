@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Eye,
@@ -16,6 +16,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import { useAuth } from "../context/AuthContext";
 import api from "../api/axios";
 import "./SignupPage.css";
 
@@ -25,7 +26,6 @@ const SignupPage = () => {
   const [userType, setUserType] = useState(null); // 'client' or 'vendor'
   const isSigningUp = React.useRef(false);
 
-  // Redirect if already logged in and not currently signing up
   useEffect(() => {
     if (isAuthenticated && !isSigningUp.current) {
       navigate("/");
@@ -51,11 +51,10 @@ const SignupPage = () => {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  // OTP States
   const [emailOtp, setEmailOtp] = useState(["", "", "", "", "", ""]);
   const [phoneOtp, setPhoneOtp] = useState(["", "", "", "", "", ""]);
   const [isEmailVerified, setIsEmailVerified] = useState(false);
-  const [isOtpVerified, setIsOtpVerified] = useState(false); // Phone verified
+  const [isOtpVerified, setIsOtpVerified] = useState(false);
 
   const validateStep1 = () => {
     if (
@@ -111,7 +110,6 @@ const SignupPage = () => {
   const handleNextStep = async () => {
     setError("");
 
-    // Step 1 -> OTP Step (Email)
     if (step === 1) {
       if (validateStep1()) {
         setIsLoading(true);
@@ -122,14 +120,14 @@ const SignupPage = () => {
           });
 
           if (response.data.mock_otp) {
-            toast.success(`Email OTP sent! DEMO: ${response.data.mock_otp}`, {
+            toast.success(`Email OTP sent! DEMO: ${response.data.mock_otp} `, {
               duration: 6000,
               icon: "📧",
             });
           } else {
-            toast.success(`Email OTP sent to ${formData.email}`);
+            toast.success(`Email OTP sent to ${formData.email} `);
           }
-          setStep(2); // Go to Email OTP Step
+          setStep(2);
         } catch (err) {
           const msg = err.response?.data?.error || "Failed to send OTP.";
           toast.error(msg);
@@ -139,12 +137,10 @@ const SignupPage = () => {
         }
       }
     }
-    // Step 2 (Email OTP) -> Step 3 (Password/Docs)
     else if (step === 2) {
       if (isEmailVerified) setStep(3);
       else toast.error("Please verify Email OTP first");
     }
-    // Step 3 (Password/Docs) -> Step 4 (Phone OTP)
     else if (step === 3) {
       if (validateStep2()) {
         verifyPhoneAndProceed();
@@ -161,14 +157,14 @@ const SignupPage = () => {
       });
 
       if (response.data.mock_otp) {
-        toast.success(`Phone OTP sent! DEMO: ${response.data.mock_otp}`, {
+        toast.success(`Phone OTP sent! DEMO: ${response.data.mock_otp} `, {
           duration: 6000,
           icon: "📱",
         });
       } else {
-        toast.success(`Phone OTP sent to ${formData.phone}`);
+        toast.success(`Phone OTP sent to ${formData.phone} `);
       }
-      setStep(4); // Go to Phone OTP Step
+      setStep(4);
     } catch (err) {
       const msg = err.response?.data?.error || "Failed to send Phone OTP.";
       toast.error(msg);
@@ -194,7 +190,6 @@ const SignupPage = () => {
       setError("");
       toast.success("Email verified successfully!");
 
-      // Auto proceed to Password/Docs
       setStep(3);
     } catch (err) {
       const msg = err.response?.data?.error || "Invalid Email OTP";
@@ -214,28 +209,26 @@ const SignupPage = () => {
     }
     setIsLoading(true);
     try {
-      // 1. Verify Phone OTP
       await api.post("/otp/verify/", {
         contact: formData.phone,
         otp: enteredOtp,
       });
       setIsOtpVerified(true);
 
-      // 2. Submit Registration
       await handleSignupInternal();
     } catch (err) {
       const msg = err.response?.data?.error || "Invalid OTP";
       toast.error(msg);
       setError(msg);
       setPhoneOtp(["", "", "", "", "", ""]);
-      setIsLoading(false); // Only stop loading if error, otherwise handleSignupInternal handles it/redirects
+      setIsLoading(false);
     }
   };
 
   const handleSignupInternal = async () => {
     try {
       setIsLoading(false);
-    } catch (err) {}
+    } catch (err) { }
   };
 
   return (
@@ -249,7 +242,7 @@ const SignupPage = () => {
 
           <div className="signup-progress">
             <div className="progress-step">
-              <div className={`step-circle ${step >= 1 ? "active" : ""}`}>
+              <div className={`step - circle ${step >= 1 ? "active" : ""} `}>
                 1
               </div>
               <div className="step-info">
@@ -261,7 +254,7 @@ const SignupPage = () => {
             <div className="progress-line"></div>
 
             <div className="progress-step">
-              <div className={`step-circle ${step >= 2 ? "active" : ""}`}>
+              <div className={`step - circle ${step >= 2 ? "active" : ""} `}>
                 2
               </div>
               <div className="step-info">
@@ -273,7 +266,7 @@ const SignupPage = () => {
             <div className="progress-line"></div>
 
             <div className="progress-step">
-              <div className={`step-circle ${step >= 3 ? "active" : ""}`}>
+              <div className={`step - circle ${step >= 3 ? "active" : ""} `}>
                 3
               </div>
               <div className="step-info">
@@ -285,7 +278,7 @@ const SignupPage = () => {
             <div className="progress-line"></div>
 
             <div className="progress-step">
-              <div className={`step-circle ${step >= 4 ? "active" : ""}`}>
+              <div className={`step - circle ${step >= 4 ? "active" : ""} `}>
                 4
               </div>
               <div className="step-info">
@@ -422,6 +415,7 @@ const SignupPage = () => {
                         <option>Delhi</option>
                         <option>Bangalore</option>
                         <option>Pune</option>
+                        <option>Nashik</option>
                         <option>Hyderabad</option>
                         <option>Chennai</option>
                         <option>Kolkata</option>
@@ -461,7 +455,7 @@ const SignupPage = () => {
                         {emailOtp.map((digit, index) => (
                           <input
                             key={index}
-                            id={`email-otp-${index}`}
+                            id={`email - otp - ${index} `}
                             type="text"
                             maxLength="1"
                             value={digit}
@@ -671,7 +665,7 @@ const SignupPage = () => {
                         {phoneOtp.map((digit, index) => (
                           <input
                             key={index}
-                            id={`otp-${index}`}
+                            id={`otp - ${index} `}
                             type="text"
                             maxLength="1"
                             value={digit}

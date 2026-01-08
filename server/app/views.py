@@ -112,7 +112,6 @@ class CreatePickupView(GenericAPIView):
         if serializer.is_valid():
             pickup_request = serializer.save(user=request.user)
 
-            # Auto-confirm if user is already verified
             if request.user.is_phone_verified:
                 pickup_request.status = "confirmed"
                 pickup_request.is_phone_verified = True
@@ -211,8 +210,6 @@ class ContactInfoView(GenericAPIView):
             pickup.otp_code = mock_otp
             pickup.save()
 
-            print(f"------------> OTP for Request {req_id}: {mock_otp}")
-
             return Response(
                 {
                     "message": "Contact info updated. OTP sent.",
@@ -240,8 +237,6 @@ class VerifyAccountView(GenericAPIView):
 
         user = request.user
         otp_service = OTPService()
-        
-        # Verify using user's phone number
         is_valid = otp_service.verify_otp(user.phone_number, otp)
 
         if is_valid:
@@ -312,9 +307,6 @@ class AvailablePickupsView(GenericAPIView):
         if not request.user.is_seller:
              return Response({"error": "Only vendors can view available pickups"}, status=status.HTTP_403_FORBIDDEN)
         
-        # Pickups that are confirmed (ready for vendor) and not yet assigned
-        # Logic: status='confirmed' means client verified phone & created request.
-        # assigned_to is None means no one took it yet.
         pickups = PickupRequest.objects.filter(status="confirmed", assigned_to__isnull=True).order_by("-created_at")
         serializer = self.get_serializer(pickups, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -354,12 +346,11 @@ class VendorCancelPickupView(GenericAPIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, pk):
-         # Vendor cancels their acceptance status (if still in vendor_accepted)
         try:
             pickup = PickupRequest.objects.get(id=pk, assigned_to=request.user)
             if pickup.status == "vendor_accepted":
                 pickup.assigned_to = None
-                pickup.status = "confirmed" # Release back to pool
+                pickup.status = "confirmed"
                 pickup.save()
                 return Response({"message": "Pickup acceptance cancelled. Released back to pool."}, status=status.HTTP_200_OK)
             else:
@@ -372,7 +363,6 @@ class ApproveVendorView(GenericAPIView):
     permission_classes = [IsAuthenticated]
     
     def post(self, request, pk):
-        # Client approves the vendor assigned to their pickup
         try:
             pickup = PickupRequest.objects.get(id=pk, user=request.user)
             if pickup.status == "vendor_accepted" and pickup.assigned_to:
@@ -389,12 +379,11 @@ class RejectVendorView(GenericAPIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, pk):
-        # Client rejects the vendor
         try:
             pickup = PickupRequest.objects.get(id=pk, user=request.user)
             if pickup.status == "vendor_accepted":
                 pickup.assigned_to = None
-                pickup.status = "confirmed" # Go back to pool
+                pickup.status = "confirmed"
                 pickup.save()
                 return Response({"message": "Vendor rejected. Request is open again."}, status=status.HTTP_200_OK)
             else:

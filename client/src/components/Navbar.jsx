@@ -25,11 +25,51 @@ const Navbar = () => {
       // toast.success(`Switching to ${redirectRole} login...`);
     } else {
       // Normal logout
-      if (window.confirm("Are you sure you want to logout?")) {
-        logout();
-        navigate("/");
-        toast.success("Logged out successfully");
-      }
+      toast((t) => (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <span>Are you sure you want to logout?</span>
+          <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+            <button
+              onClick={() => {
+                toast.dismiss(t.id);
+                logout();
+                navigate("/");
+                toast.success("Logged out successfully");
+              }}
+              style={{
+                background: '#ef4444',
+                color: 'white',
+                border: 'none',
+                padding: '6px 12px',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '14px'
+              }}
+            >
+              Yes, Logout
+            </button>
+            <button
+              onClick={() => toast.dismiss(t.id)}
+              style={{
+                background: '#e5e7eb',
+                color: '#374151',
+                border: 'none',
+                padding: '6px 12px',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '14px'
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ), {
+        duration: 5000,
+        style: {
+          minWidth: '300px'
+        }
+      });
     }
     setIsOpen(false);
     setIsDropdownOpen(false);

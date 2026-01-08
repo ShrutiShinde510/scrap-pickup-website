@@ -21,7 +21,6 @@ api.interceptors.response.use(
     const originalRequest = error.config;
 
     if (error.response?.status === 401 && !originalRequest._retry) {
-      // Don't retry/redirect for login failures
       if (originalRequest.url?.includes("login/")) {
         return Promise.reject(error);
       }
@@ -31,7 +30,6 @@ api.interceptors.response.use(
         const refreshToken = localStorage.getItem("refresh_token");
         if (!refreshToken) throw new Error("No refresh token");
 
-        // Use standard axios for refresh to avoid infinite loop if this api instance is used
         const response = await axios.post(
           "http://127.0.0.1:8000/api/token/refresh/",
           {
