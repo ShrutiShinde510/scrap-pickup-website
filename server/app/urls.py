@@ -18,6 +18,7 @@ from .views import (
     VendorCancelPickupView,
     ApproveVendorView,
     RejectVendorView,
+    ChatView,
 )
 
 urlpatterns = [
@@ -45,4 +46,5 @@ urlpatterns = [
     # Pickup Approval (Client)
     path("pickup/approve/<int:pk>/", ApproveVendorView.as_view(), name="pickup_approve"),
     path("pickup/reject/<int:pk>/", RejectVendorView.as_view(), name="pickup_reject"),
+    path("pickup/chat/<int:pickup_id>/", ChatView.as_view(), name="pickup_chat"),
 ]

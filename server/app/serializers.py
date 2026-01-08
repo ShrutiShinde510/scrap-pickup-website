@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from .models import User
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from .models import PickupRequest
+from .models import PickupRequest, ChatMessage
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -179,3 +179,22 @@ class PickupRequestSerializer(serializers.ModelSerializer):
 class OTPVerificationSerializer(serializers.Serializer):
     request_id = serializers.IntegerField()
     otp = serializers.CharField(min_length=6, max_length=6)
+
+
+class ChatMessageSerializer(serializers.ModelSerializer):
+    sender_name = serializers.CharField(source="sender.full_name", read_only=True)
+    sender_email = serializers.CharField(source="sender.email", read_only=True)
+
+    class Meta:
+        model = ChatMessage
+        fields = [
+            "id",
+            "pickup_request",
+            "sender",
+            "sender_name",
+            "sender_email",
+            "message",
+            "created_at",
+            "is_read",
+        ]
+        read_only_fields = ["sender", "created_at", "is_read"]

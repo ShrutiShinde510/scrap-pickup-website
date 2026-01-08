@@ -11,7 +11,9 @@ services:
       - "5432:5432"
 
   server:
-    build: ./server
+    build:
+      context: .
+      dockerfile: server/Dockerfile
     volumes:
       - ./server:/app
     # command is handled by Dockerfile ENTRYPOINT

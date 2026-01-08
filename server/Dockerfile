@@ -15,17 +15,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Install dependencies
-COPY requirements.txt /app/
+COPY server/requirements.txt /app/
 RUN pip install --upgrade pip && pip install -r requirements.txt
 
 # Copy project
-COPY . /app/
+COPY server/ /app/
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 
 # Fix line endings and make entrypoint executable
-RUN dos2unix /app/entrypoint.sh && chmod +x /app/entrypoint.sh
+RUN dos2unix /usr/local/bin/entrypoint.sh && chmod +x /usr/local/bin/entrypoint.sh
 
 # Expose port 
 EXPOSE 8000
 
 # Run the application
-ENTRYPOINT ["/app/entrypoint.sh"]
+ENTRYPOINT ["entrypoint.sh"]

@@ -9,8 +9,8 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import CustomTokenObtainPairSerializer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import MultiPartParser, FormParser
-from .serializers import PickupRequestSerializer, OTPVerificationSerializer
-from .models import PickupRequest
+from .serializers import PickupRequestSerializer, OTPVerificationSerializer, ChatMessageSerializer
+from .models import PickupRequest, ChatMessage
 import random
 from .services.otp_service import OTPService
 from django.core.cache import cache
@@ -402,3 +402,50 @@ class RejectVendorView(GenericAPIView):
         except PickupRequest.DoesNotExist:
              return Response({"error": "Pickup request not found"}, status=status.HTTP_404_NOT_FOUND)
 
+
+class ChatView(GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = ChatMessageSerializer
+
+    def get(self, request, pickup_id):
+        try:
+            pickup = PickupRequest.objects.get(id=pickup_id)
+        except PickupRequest.DoesNotExist:
+            return Response(
+                {"error": "Pickup not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Allow if user is owner or assigned vendor
+        if pickup.user != request.user and pickup.assigned_to != request.user:
+            return Response(
+                {"error": "Access denied"}, status=status.HTTP_403_FORBIDDEN
+            )
+
+        messages = ChatMessage.objects.filter(pickup_request=pickup).order_by(
+            "created_at"
+        )
+        serializer = self.get_serializer(messages, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def post(self, request, pickup_id):
+        try:
+            pickup = PickupRequest.objects.get(id=pickup_id)
+        except PickupRequest.DoesNotExist:
+            return Response(
+                {"error": "Pickup not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        if pickup.user != request.user and pickup.assigned_to != request.user:
+            return Response(
+                {"error": "Access denied"}, status=status.HTTP_403_FORBIDDEN
+            )
+
+        # Optional: strictly enforce status check if needed
+        # if pickup.status not in ["vendor_accepted", "scheduled"]:
+        #    return Response({"error": "Chat not enabled for this status"}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(sender=request.user, pickup_request=pickup)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

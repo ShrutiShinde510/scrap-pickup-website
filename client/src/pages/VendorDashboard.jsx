@@ -17,11 +17,13 @@ import {
   Star,
   Filter,
   History,
-  AlertCircle // Added
+  AlertCircle,
+  MessageCircle,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useAuth } from "../context/AuthContext";
 import api from "../api/axios";
+import ChatBox from "../components/ChatBox";
 import "./VendorDashboard.css";
 
 const VendorDashboard = () => {
@@ -58,6 +60,7 @@ const VendorDashboard = () => {
 
   const [activeTab, setActiveTab] = useState("overview"); // overview, available, my_pickups
   const [selectedBooking, setSelectedBooking] = useState(null);
+  const [activeChatPickupId, setActiveChatPickupId] = useState(null);
   const [vendorLocation, setVendorLocation] = useState({
     latitude: 18.5204,
     longitude: 73.8567,
@@ -455,9 +458,42 @@ const VendorDashboard = () => {
                       <Phone size={18} /> Call Client: {selectedBooking.contact_phone}
                     </button>
                   )}
+                  {/* Active Chat Button */}
+                  <button
+                    className="btn-chat"
+                    style={{ background: '#3b82f6', color: 'white', marginTop: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', width: '100%', padding: '12px', borderRadius: '12px', border: 'none', fontWeight: '600', cursor: 'pointer' }}
+                    onClick={() => {
+                      setActiveChatPickupId(selectedBooking.id);
+                      setSelectedBooking(null); // Close details modal
+                    }}
+                  >
+                    <MessageCircle size={18} /> Chat with Client
+                  </button>
                 </div>
               )}
             </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderChatModal = () => {
+    if (!activeChatPickupId) return null;
+
+    return (
+      <div className="location-modal-overlay" onClick={() => setActiveChatPickupId(null)}>
+        <div
+          className="location-modal"
+          onClick={(e) => e.stopPropagation()}
+          style={{ maxWidth: '450px', padding: '0' }}
+        >
+          <div className="modal-header" style={{ padding: '1rem', borderBottom: '1px solid #eee' }}>
+            <h2 style={{ fontSize: '1.2rem', margin: 0 }}>💬 Chat with Client</h2>
+            <button className="modal-close" onClick={() => setActiveChatPickupId(null)}>✕</button>
+          </div>
+          <div className="modal-body" style={{ padding: '0' }}>
+            <ChatBox pickupId={activeChatPickupId} style={{ border: 'none', boxShadow: 'none', height: '500px' }} />
           </div>
         </div>
       </div>
@@ -649,6 +685,20 @@ const VendorDashboard = () => {
               <button className="btn-view-details" onClick={() => setSelectedBooking(booking)}>
                 View Details / Actions
               </button>
+              {/* Quick Chat from list */}
+              {["vendor_accepted", "scheduled", "in_progress"].includes(booking.status) && (
+                <button
+                  className="btn-chat-icon"
+                  style={{ marginLeft: '10px', padding: '8px', borderRadius: '50%', border: 'none', background: '#e0f2fe', color: '#0284c7', cursor: 'pointer' }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setActiveChatPickupId(booking.id);
+                  }}
+                  title="Chat with Client"
+                >
+                  <MessageCircle size={18} />
+                </button>
+              )}
             </div>
           </div>
         ))}
@@ -774,6 +824,7 @@ const VendorDashboard = () => {
 
       {renderScrapSelectionModal()}
       {renderBookingModal()}
+      {renderChatModal()}
     </div>
   );
 };
