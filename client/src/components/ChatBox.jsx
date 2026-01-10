@@ -189,7 +189,7 @@ const ChatBox = ({ pickupId, className }) => {
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
                     />
-                    <button type="submit" disabled={!newMessage.trim()}>
+                    <button type="submit" className="btn-send-message" disabled={!newMessage.trim()}>
                         ➤
                     </button>
                 </form>

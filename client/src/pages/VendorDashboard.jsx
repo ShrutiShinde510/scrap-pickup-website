@@ -486,7 +486,6 @@ const VendorDashboard = () => {
                   {/* Active Chat Button */}
                   <button
                     className="btn-chat"
-                    style={{ background: '#3b82f6', color: 'white', marginTop: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', width: '100%', padding: '12px', borderRadius: '12px', border: 'none', fontWeight: '600', cursor: 'pointer' }}
                     onClick={() => {
                       setActiveChatPickupId(selectedBooking.id);
                       setSelectedBooking(null); // Close details modal
@@ -711,7 +710,6 @@ const VendorDashboard = () => {
               {["vendor_accepted", "scheduled", "in_progress"].includes(booking.status) && (
                 <button
                   className="btn-chat-icon"
-                  style={{ marginLeft: '10px', padding: '8px', borderRadius: '50%', border: 'none', background: '#e0f2fe', color: '#0284c7', cursor: 'pointer' }}
                   onClick={(e) => {
                     e.stopPropagation();
                     setActiveChatPickupId(booking.id);
