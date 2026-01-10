@@ -44,8 +44,6 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (type, data) => {
     try {
-      // Explicitly unset Content-Type for FormData so browser sets the boundary.
-      // This overrides any global/instance defaults that might be set to application/json.
       const config = data instanceof FormData
         ? { headers: { "Content-Type": undefined } }
         : {};

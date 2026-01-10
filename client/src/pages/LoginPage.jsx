@@ -23,9 +23,8 @@ const LoginPage = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const isLoggingIn = React.useRef(false); // Track if we are currently submitting login
+  const isLoggingIn = React.useRef(false);
 
-  // Update role if query param changes (e.g. navigation)
   useEffect(() => {
     const roleParam = searchParams.get('role');
     if (roleParam && (roleParam === 'client' || roleParam === 'vendor')) {
@@ -33,11 +32,8 @@ const LoginPage = () => {
     }
   }, [searchParams]);
 
-  // Redirect if already logged in and NOT currently logging in
   React.useEffect(() => {
     if (isAuthenticated && !isLoggingIn.current) {
-      // If user is already logged in, redirect them to home or dashboard
-      // using a safe default.
       navigate('/');
     }
   }, [isAuthenticated, navigate]);
@@ -48,19 +44,19 @@ const LoginPage = () => {
 
     if (!formData.email || !formData.password) {
       toast.error('Please fill all fields');
-      setError('Please fill all fields'); // Keep local error state for UI if needed, or remove
+      setError('Please fill all fields');
       return;
     }
 
     setIsLoading(true);
-    isLoggingIn.current = true; // Mark as active login attempt
+    isLoggingIn.current = true;
     console.log("LoginPage: Attempting login for", formData.email);
     const res = await login(formData.email, formData.password);
     console.log("LoginPage: Login response", res);
     setIsLoading(false);
 
     if (!res.success) {
-      isLoggingIn.current = false; // Reset if failed
+      isLoggingIn.current = false;
     }
 
     if (res.success) {
@@ -68,7 +64,6 @@ const LoginPage = () => {
 
       const user = res.user;
 
-      // Role Validation
       if (formData.role === 'client' && !user.is_client) {
         toast.error('Access Denied: This account is not registered as a client.');
         setError('Access Denied: This account is not registered as a client.');
@@ -89,11 +84,9 @@ const LoginPage = () => {
         return;
       }
 
-      // Store the active role intent
       localStorage.setItem('userRole', formData.role);
 
       toast.success('Login Successful!');
-      // Determine redirection based on role
       if (formData.role === 'vendor') {
         navigate('/vendor-dashboard', { replace: true });
       } else {

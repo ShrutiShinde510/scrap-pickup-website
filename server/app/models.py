@@ -60,7 +60,7 @@ class User(AbstractUser):
 class PickupRequest(models.Model):
     STATUS_CHOICES = [
         ("pending", "Pending"),
-        ("confirmed", "Confirmed"),
+        ("open", "Open"),
         ("vendor_accepted", "Vendor Accepted"),
         ("scheduled", "Scheduled"),
         ("completed", "Completed"),
@@ -113,6 +113,15 @@ class ChatMessage(models.Model):
     message = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     is_read = models.BooleanField(default=False)
+    
+    # Offer Details
+    is_offer = models.BooleanField(default=False)
+    offer_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    offer_status = models.CharField(
+        max_length=20, 
+        choices=[('pending', 'Pending'), ('accepted', 'Accepted'), ('rejected', 'Rejected')],
+        default='pending'
+    )
 
     class Meta:
         ordering = ["created_at"]

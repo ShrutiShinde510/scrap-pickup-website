@@ -196,5 +196,8 @@ class ChatMessageSerializer(serializers.ModelSerializer):
             "message",
             "created_at",
             "is_read",
+            "is_offer",
+            "offer_amount",
+            "offer_status",
         ]
-        read_only_fields = ["sender", "created_at", "is_read"]
+        read_only_fields = ["sender", "created_at", "is_read", "pickup_request", "offer_status"]

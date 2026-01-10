@@ -581,6 +581,7 @@ const VendorRegistrationPage = () => {
                     <option value="Delhi">Delhi</option>
                     <option value="Bangalore">Bangalore</option>
                     <option value="Pune">Pune</option>
+                    <option value="Nashik">Nashik</option>
                     <option value="Hyderabad">Hyderabad</option>
                     <option value="Chennai">Chennai</option>
                     <option value="Kolkata">Kolkata</option>

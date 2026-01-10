@@ -28,13 +28,12 @@ import "./VendorDashboard.css";
 
 const VendorDashboard = () => {
   const navigate = useNavigate();
-  const { user } = useAuth(); // Removed logout unused
+  const { user } = useAuth();
 
   // Vendor's selected scrap types
   const [selectedScrapTypes, setSelectedScrapTypes] = useState([]);
   const [showScrapSelection, setShowScrapSelection] = useState(false);
 
-  // Available scrap types
   const availableScrapTypes = [
     "Plastic",
     "Paper",
@@ -46,11 +45,10 @@ const VendorDashboard = () => {
     "Mixed Scrap",
   ];
 
-  const [availableBookings, setAvailableBookings] = useState([]); // Pickups to accept
-  const [myBookings, setMyBookings] = useState([]); // Accepted pickups
+  const [availableBookings, setAvailableBookings] = useState([]);
+  const [myBookings, setMyBookings] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Stats
   const [stats, setStats] = useState({
     totalAssigned: 0,
     pendingPickups: 0,
@@ -58,7 +56,7 @@ const VendorDashboard = () => {
     totalEarnings: 0,
   });
 
-  const [activeTab, setActiveTab] = useState("overview"); // overview, available, my_pickups
+  const [activeTab, setActiveTab] = useState("overview");
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [activeChatPickupId, setActiveChatPickupId] = useState(null);
   const [vendorLocation, setVendorLocation] = useState({
@@ -107,18 +105,16 @@ const VendorDashboard = () => {
   const fetchAllData = async () => {
     setLoading(true);
     try {
-      // 1. Fetch Available Pickups
       const availRes = await api.get("/pickup/available/");
       setAvailableBookings(availRes.data);
 
-      // 2. Fetch My Pickups
       const myRes = await api.get("/pickup/vendor-list/");
       setMyBookings(myRes.data);
 
       updateStats(myRes.data);
     } catch (err) {
       console.error("Error fetching data:", err);
-      // toast.error("Failed to load dashboard data");
+
     } finally {
       setLoading(false);
     }
@@ -152,10 +148,8 @@ const VendorDashboard = () => {
       JSON.stringify(selectedScrapTypes),
     );
     setShowScrapSelection(false);
-    // Trigger re-filter if needed, or backend filtering could be added
   };
 
-  // Filter available bookings by selected scrap types
   const filteredAvailableBookings = availableBookings.filter(b =>
     selectedScrapTypes.length === 0 || selectedScrapTypes.includes(b.scrap_type)
   );
@@ -175,20 +169,61 @@ const VendorDashboard = () => {
 
 
   const handleCancelAcceptance = async (bookingId) => {
-    if (!confirm("Are you sure you want to cancel this pickup? It will be released back to other vendors.")) return;
-    try {
-      await api.post(`/pickup/vendor-cancel/${bookingId}/`);
-      toast.success("Pickup cancelled successfully.");
-      fetchAllData();
-      setSelectedBooking(null);
-    } catch (err) {
-      console.error("Cancel Error:", err);
-      toast.error(err.response?.data?.error || "Failed to cancel pickup");
-    }
+    toast((t) => (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <span>Cancel this pickup? It will be released back to other vendors.</span>
+        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+          <button
+            onClick={() => {
+              toast.dismiss(t.id);
+              api.post(`/pickup/vendor-cancel/${bookingId}/`)
+                .then(() => {
+                  toast.success("Pickup cancelled successfully.");
+                  fetchAllData();
+                  setSelectedBooking(null);
+                })
+                .catch((err) => {
+                  console.error("Cancel Error:", err);
+                  toast.error(err.response?.data?.error || "Failed to cancel pickup");
+                });
+            }}
+            style={{
+              background: '#ef4444',
+              color: 'white',
+              border: 'none',
+              padding: '6px 12px',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '14px'
+            }}
+          >
+            Yes, Cancel
+          </button>
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            style={{
+              background: '#e5e7eb',
+              color: '#374151',
+              border: 'none',
+              padding: '6px 12px',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '14px'
+            }}
+          >
+            No
+          </button>
+        </div>
+      </div>
+    ), {
+      duration: 5000,
+      style: {
+        minWidth: '300px'
+      }
+    });
   };
 
   const handleCompleteBooking = async (bookingId) => {
-    // Placeholder for future implementation
     toast("Marking as complete is not yet enabled.", { icon: "🚧" });
   };
 
@@ -196,7 +231,7 @@ const VendorDashboard = () => {
 
   const getStatusBadge = (status) => {
     const badges = {
-      confirmed: { color: "#3b82f6", icon: Package, text: "Available" }, // For available list
+      confirmed: { color: "#3b82f6", icon: Package, text: "Available" },
       vendor_accepted: { color: "#f59e0b", icon: Clock, text: "Pending Approval" },
       scheduled: { color: "#8b5cf6", icon: Calendar, text: "Scheduled" },
       in_progress: { color: "#8b5cf6", icon: TrendingUp, text: "In Progress" },
@@ -263,7 +298,7 @@ const VendorDashboard = () => {
   };
 
 
-  // ... (Scrap Selection Modal - unchanged)
+
   const renderScrapSelectionModal = () => {
     if (!showScrapSelection) return null;
 
@@ -320,11 +355,9 @@ const VendorDashboard = () => {
     );
   };
 
-  // Booking Details Modal
   const renderBookingModal = () => {
     if (!selectedBooking) return null;
 
-    // Determine if it's an available booking (not yet yours) or your booking
     const isMyBooking = myBookings.find(b => b.id === selectedBooking.id);
 
     return (
@@ -344,7 +377,6 @@ const VendorDashboard = () => {
           </div>
 
           <div className="modal-body">
-            {/* Booking Info */}
             <div className="modal-section">
               <h3>ID: #{selectedBooking.id}</h3>
               <div className="modal-info-grid">
@@ -379,8 +411,6 @@ const VendorDashboard = () => {
               </div>
             </div>
 
-            {/* Client Info (Only if accepted or if needed before accept) */}
-            {/* Usually full client info is hidden until accepted, but location is visible */}
             <div className="modal-section">
               <div className="pickup-location-card" style={{ marginBottom: "12px" }}>
                 <MapPin size={20} style={{ color: "#059669" }} />
@@ -408,9 +438,7 @@ const VendorDashboard = () => {
               )}
             </div>
 
-            {/* Action Buttons */}
             <div className="modal-section">
-              {/* IF AVAILABLE LIST (status=confirmed) */}
               {selectedBooking.status === "confirmed" && !isMyBooking && (
                 <button
                   className="btn-accept-booking"
@@ -423,7 +451,6 @@ const VendorDashboard = () => {
                 </button>
               )}
 
-              {/* IF PENDING APPROVAL (status=vendor_accepted) */}
               {selectedBooking.status === "vendor_accepted" && isMyBooking && (
                 <div style={{ textAlign: 'center', width: '100%' }}>
                   <p style={{ marginBottom: '10px', color: '#f59e0b' }}>Waiting for client to approve...</p>
@@ -440,8 +467,6 @@ const VendorDashboard = () => {
                 </div>
               )}
 
-              {/* IF SCHEDULED/INPROGRESS */}
-              {/* Only allow navigation if scheduled/approved */}
               {["scheduled", "in_progress"].includes(selectedBooking.status) && isMyBooking && (
                 <div style={{ display: 'flex', gap: '10px', flexDirection: 'column' }}>
                   <button
@@ -478,6 +503,7 @@ const VendorDashboard = () => {
     );
   };
 
+
   const renderChatModal = () => {
     if (!activeChatPickupId) return null;
 
@@ -500,7 +526,6 @@ const VendorDashboard = () => {
     );
   };
 
-  // Overview Tab
   const renderOverview = () => (
     <div className="dashboard-overview">
       <div className="stats-grid">
@@ -545,7 +570,6 @@ const VendorDashboard = () => {
         </div>
       </div>
 
-      {/* Selected Scrap Types */}
       <div className="recent-bookings" style={{ marginBottom: "30px" }}>
         <div className="section-header">
           <h2>Your Scrap Types</h2>
@@ -618,7 +642,6 @@ const VendorDashboard = () => {
     </div>
   );
 
-  // Available List Tab
   const renderAvailableList = () => (
     <div className="bookings-list">
       <div className="section-header">
@@ -650,7 +673,6 @@ const VendorDashboard = () => {
     </div>
   );
 
-  // My Pickups Tab
   const renderMyPickups = () => (
     <div className="bookings-list">
       <div className="section-header">
@@ -711,7 +733,6 @@ const VendorDashboard = () => {
     </div>
   );
 
-  // Profile Tab
   const renderProfile = () => (
     <div className="profile-section">
       <div className="profile-card">

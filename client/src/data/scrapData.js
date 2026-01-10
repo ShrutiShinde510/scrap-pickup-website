@@ -1,20 +1,20 @@
 export const scrapCategories = [
   { id: 1, name: 'Paper', price: '15-20', items: ['Newspaper', 'Cardboard', 'Office Paper', 'Books'], icon: '📰' },
-  { id: 2, name: 'Plastic', price: '10-25', items: ['PET Bottles', 'HDPE', 'PVC', 'Plastic Bags'],icon: '🧴' },
-  { id: 3, name: 'Metal', price: '30-50', items: ['Iron', 'Steel', 'Aluminum', 'Copper'] , icon: '🔩'},
-  { id: 4, name: 'E-Waste', price: '20-100', items: ['Mobile Phones', 'Laptops', 'Batteries', 'Cables'] ,icon: '💻'},
-  { id: 5, name: 'Glass', price: '5-10', items: ['Bottles', 'Broken Glass', 'Mirrors'] , icon: '🍾'}
+  { id: 2, name: 'Plastic', price: '10-25', items: ['PET Bottles', 'HDPE', 'PVC', 'Plastic Bags'], icon: '🧴' },
+  { id: 3, name: 'Metal', price: '30-50', items: ['Iron', 'Steel', 'Aluminum', 'Copper'], icon: '🔩' },
+  { id: 4, name: 'E-Waste', price: '20-100', items: ['Mobile Phones', 'Laptops', 'Batteries', 'Cables'], icon: '💻' },
+  { id: 5, name: 'Glass', price: '5-10', items: ['Bottles', 'Broken Glass', 'Mirrors'], icon: '🍾' }
 ];
 
-export const cities = ['Mumbai', 'Delhi', 'Bangalore', 'Pune', 'Hyderabad', 'Chennai', 'Kolkata'];
+export const cities = ['Mumbai', 'Delhi', 'Bangalore', 'Pune', 'Nashik', 'Hyderabad', 'Chennai', 'Kolkata'];
 
 export const acceptedMaterials = [
-  'Paper & Cardboard', 'Plastic Bottles', 'Metal Scrap', 'E-Waste', 
+  'Paper & Cardboard', 'Plastic Bottles', 'Metal Scrap', 'E-Waste',
   'Glass Items', 'Appliances', 'Furniture', 'Batteries'
 ];
 
 export const nonAcceptedMaterials = [
-  'Hazardous Chemicals', 'Medical Waste', 'Radioactive Materials', 
+  'Hazardous Chemicals', 'Medical Waste', 'Radioactive Materials',
   'Wet Garbage', 'Food Waste'
 ];
 

@@ -76,7 +76,7 @@ function App() {
       </main>
 
       {!hideLayout && <Footer />}
-      <Toaster position="top-center" />
+      <Toaster position="bottom-right" />
     </div>
   );
 }
