@@ -639,9 +639,9 @@ const BookPickupPage = () => {
           <div className="success-icon">
             <CheckCircle size={80} />
           </div>
-          <h1 className="success-title">Booking Confirmed!</h1>
+          <h1 className="success-title">Request Submitted!</h1>
           <p className="success-subtitle">
-            Your scrap pickup has been scheduled successfully
+            Searching for nearby vendors...
           </p>
 
           <div className="booking-id-card">

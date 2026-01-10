@@ -113,7 +113,7 @@ class CreatePickupView(GenericAPIView):
             pickup_request = serializer.save(user=request.user)
 
             if request.user.is_phone_verified:
-                pickup_request.status = "confirmed"
+                pickup_request.status = "open"
                 pickup_request.is_phone_verified = True
                 pickup_request.save()
 
@@ -166,7 +166,7 @@ class VerifyPickupOTPView(GenericAPIView):
                 pickup_req = PickupRequest.objects.get(id=req_id)
                 if pickup_req.otp_code == otp:
                     pickup_req.is_phone_verified = True
-                    pickup_req.status = "confirmed"
+                    pickup_req.status = "open"
                     pickup_req.save()
                     return Response(
                         {"message": "Phone verified. Pickup confirmed."},
@@ -307,7 +307,7 @@ class AvailablePickupsView(GenericAPIView):
         if not request.user.is_seller:
              return Response({"error": "Only vendors can view available pickups"}, status=status.HTTP_403_FORBIDDEN)
         
-        pickups = PickupRequest.objects.filter(status="confirmed", assigned_to__isnull=True).order_by("-created_at")
+        pickups = PickupRequest.objects.filter(status="open", assigned_to__isnull=True).order_by("-created_at")
         serializer = self.get_serializer(pickups, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -333,7 +333,7 @@ class AcceptPickupView(GenericAPIView):
              return Response({"error": "Only vendors can accept pickups"}, status=status.HTTP_403_FORBIDDEN)
 
         try:
-            pickup = PickupRequest.objects.get(id=pk, status="confirmed", assigned_to__isnull=True)
+            pickup = PickupRequest.objects.get(id=pk, status="open", assigned_to__isnull=True)
             pickup.assigned_to = request.user
             pickup.status = "vendor_accepted"
             pickup.save()
@@ -350,7 +350,7 @@ class VendorCancelPickupView(GenericAPIView):
             pickup = PickupRequest.objects.get(id=pk, assigned_to=request.user)
             if pickup.status == "vendor_accepted":
                 pickup.assigned_to = None
-                pickup.status = "confirmed"
+                pickup.status = "open"
                 pickup.save()
                 return Response({"message": "Pickup acceptance cancelled. Released back to pool."}, status=status.HTTP_200_OK)
             else:
@@ -383,7 +383,7 @@ class RejectVendorView(GenericAPIView):
             pickup = PickupRequest.objects.get(id=pk, user=request.user)
             if pickup.status == "vendor_accepted":
                 pickup.assigned_to = None
-                pickup.status = "confirmed"
+                pickup.status = "open"
                 pickup.save()
                 return Response({"message": "Vendor rejected. Request is open again."}, status=status.HTTP_200_OK)
             else:
@@ -429,12 +429,88 @@ class ChatView(GenericAPIView):
                 {"error": "Access denied"}, status=status.HTTP_403_FORBIDDEN
             )
 
-        # Optional: strictly enforce status check if needed
-        # if pickup.status not in ["vendor_accepted", "scheduled"]:
-        #    return Response({"error": "Chat not enabled for this status"}, status=status.HTTP_400_BAD_REQUEST)
+        # Enforce status check: Chat only allowed after vendor has accepted
+        # Enforce status check: Chat only allowed after vendor has accepted
+        if pickup.status not in ["vendor_accepted", "scheduled", "in_progress"]:
+           return Response({"error": "Chat not enabled for this status."}, status=status.HTTP_400_BAD_REQUEST)
 
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             serializer.save(sender=request.user, pickup_request=pickup)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class AcceptOfferView(GenericAPIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, msg_id):
+        try:
+            message = ChatMessage.objects.get(id=msg_id)
+        except ChatMessage.DoesNotExist:
+            return Response({"error": "Message not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        pickup = message.pickup_request
+        # Check permission: Only the recipient can accept
+        # If sender is client, vendor must accept. If sender is vendor, client must accept.
+        if message.sender == request.user:
+             return Response({"error": "Cannot accept your own offer"}, status=status.HTTP_403_FORBIDDEN)
+        
+        # Verify user is part of the pickup
+        if request.user not in [pickup.user, pickup.assigned_to]:
+             return Response({"error": "Access denied"}, status=status.HTTP_403_FORBIDDEN)
+        
+        if not message.is_offer or message.offer_status != 'pending':
+             return Response({"error": "Invalid offer or already processed"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Accept logic
+        message.offer_status = 'accepted'
+        message.save()
+
+        # Update Pickup
+        pickup.status = 'scheduled'
+        pickup.estimated_price = message.offer_amount
+        pickup.save()
+        
+        # Create a system message confirming acceptance
+        ChatMessage.objects.create(
+            pickup_request=pickup,
+            sender=request.user,
+            message=f"Offer of ₹{message.offer_amount} accepted. Pickup scheduled.",
+            is_offer=False
+        )
+
+        return Response({"message": "Offer accepted. Pickup scheduled."}, status=status.HTTP_200_OK)
+
+
+class RejectOfferView(GenericAPIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, msg_id):
+        try:
+            message = ChatMessage.objects.get(id=msg_id)
+        except ChatMessage.DoesNotExist:
+            return Response({"error": "Message not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        if message.sender == request.user:
+             return Response({"error": "Cannot reject your own offer"}, status=status.HTTP_403_FORBIDDEN)
+
+        pickup = message.pickup_request
+        if request.user not in [pickup.user, pickup.assigned_to]:
+             return Response({"error": "Access denied"}, status=status.HTTP_403_FORBIDDEN)
+
+        if not message.is_offer or message.offer_status != 'pending':
+             return Response({"error": "Invalid offer or already processed"}, status=status.HTTP_400_BAD_REQUEST)
+
+        message.offer_status = 'rejected'
+        message.save()
+        
+        # Create a system message confirming rejection
+        ChatMessage.objects.create(
+            pickup_request=pickup,
+            sender=request.user,
+            message=f"Offer of ₹{message.offer_amount} rejected.",
+            is_offer=False
+        )
+
+        return Response({"message": "Offer rejected."}, status=status.HTTP_200_OK)
