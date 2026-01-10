@@ -13,13 +13,13 @@ import {
   Edit,
   Navigation,
   Phone,
+  MessageCircle,
 } from "lucide-react";
 import toast from 'react-hot-toast';
 import { GoogleMap, useJsApiLoader, Marker } from "@react-google-maps/api";
 import { useAuth } from "../context/AuthContext";
 import api from "../api/axios";
 import ChatBox from "../components/ChatBox";
-import { MessageCircle } from "lucide-react";
 import "./ClientDashboard.css";
 
 const ClientDashboard = () => {
@@ -565,19 +565,6 @@ const ClientDashboard = () => {
               </div>
 
               <div className="booking-actions">
-                <button className="btn-view-details" onClick={() => setSelectedBooking(booking)}>
-                  Details
-                </button>
-                {["vendor_accepted", "scheduled", "in_progress"].includes(booking.status) && (
-                  <button
-                    className="btn-chat"
-                    style={{ background: '#3b82f6', color: 'white', display: 'flex', alignItems: 'center', gap: '6px', border: 'none', padding: '10px 16px', borderRadius: '8px', fontWeight: '600', cursor: 'pointer' }}
-                    onClick={() => setActiveChatPickupId(booking.id)}
-                  >
-                    <MessageCircle size={16} />
-                    Chat
-                  </button>
-                )}
                 <button
                   className="btn-track"
                   onClick={() => setSelectedBooking(booking)}
@@ -616,6 +603,17 @@ const ClientDashboard = () => {
                       Reject
                     </button>
                   </>
+                )}
+
+                {/* Chat Button - only when vendor is accepted or scheduled */}
+                {["vendor_accepted", "scheduled", "in_progress"].includes(booking.status) && (
+                  <button
+                    className="btn-chat"
+                    onClick={() => setActiveChatPickupId(booking.id)}
+                  >
+                    <MessageCircle size={16} />
+                    Chat
+                  </button>
                 )}
               </div>
             </div>
