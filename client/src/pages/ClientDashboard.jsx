@@ -15,7 +15,7 @@ import {
   Phone,
   MessageCircle,
 } from "lucide-react";
-import toast from 'react-hot-toast';
+import toast from "react-hot-toast";
 import { GoogleMap, useJsApiLoader, Marker } from "@react-google-maps/api";
 import { useAuth } from "../context/AuthContext";
 import api from "../api/axios";
@@ -111,57 +111,63 @@ const ClientDashboard = () => {
   };
 
   const handleCancelBooking = async (bookingId) => {
-    toast((t) => (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-        <span>Are you sure you want to cancel this booking?</span>
-        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-          <button
-            onClick={() => {
-              toast.dismiss(t.id);
-              api.post(`pickup/cancel/${bookingId}/`)
-                .then(() => {
-                  loadBookings();
-                  toast.success("Booking cancelled successfully");
-                })
-                .catch((err) => {
-                  console.error("Cancel Error:", err);
-                  toast.error("Failed to cancel booking");
-                });
-            }}
-            style={{
-              background: '#ef4444',
-              color: 'white',
-              border: 'none',
-              padding: '6px 12px',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontSize: '14px'
-            }}
+    toast(
+      (t) => (
+        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+          <span>Are you sure you want to cancel this booking?</span>
+          <div
+            style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}
           >
-            Yes, Cancel
-          </button>
-          <button
-            onClick={() => toast.dismiss(t.id)}
-            style={{
-              background: '#e5e7eb',
-              color: '#374151',
-              border: 'none',
-              padding: '6px 12px',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontSize: '14px'
-            }}
-          >
-            No
-          </button>
+            <button
+              onClick={() => {
+                toast.dismiss(t.id);
+                api
+                  .post(`pickup/cancel/${bookingId}/`)
+                  .then(() => {
+                    loadBookings();
+                    toast.success("Booking cancelled successfully");
+                  })
+                  .catch((err) => {
+                    console.error("Cancel Error:", err);
+                    toast.error("Failed to cancel booking");
+                  });
+              }}
+              style={{
+                background: "#ef4444",
+                color: "white",
+                border: "none",
+                padding: "6px 12px",
+                borderRadius: "6px",
+                cursor: "pointer",
+                fontSize: "14px",
+              }}
+            >
+              Yes, Cancel
+            </button>
+            <button
+              onClick={() => toast.dismiss(t.id)}
+              style={{
+                background: "#e5e7eb",
+                color: "#374151",
+                border: "none",
+                padding: "6px 12px",
+                borderRadius: "6px",
+                cursor: "pointer",
+                fontSize: "14px",
+              }}
+            >
+              No
+            </button>
+          </div>
         </div>
-      </div>
-    ), {
-      duration: 5000,
-      style: {
-        minWidth: '300px'
-      }
-    });
+      ),
+      {
+        duration: 5000,
+        style: {
+          minWidth: "300px",
+        },
+      },
+    );
   };
 
   const handleApproveVendor = async (bookingId) => {
@@ -176,57 +182,65 @@ const ClientDashboard = () => {
   };
 
   const handleRejectVendor = async (bookingId) => {
-    toast((t) => (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-        <span>Reject this vendor? The request will go back to the pool.</span>
-        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-          <button
-            onClick={() => {
-              toast.dismiss(t.id);
-              api.post(`/pickup/reject/${bookingId}/`)
-                .then(() => {
-                  toast.success("Vendor rejected. Searching for another...");
-                  loadBookings();
-                })
-                .catch((err) => {
-                  console.error("Reject Error:", err);
-                  toast.error(err.response?.data?.error || "Failed to reject vendor");
-                });
-            }}
-            style={{
-              background: '#ef4444',
-              color: 'white',
-              border: 'none',
-              padding: '6px 12px',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontSize: '14px'
-            }}
+    toast(
+      (t) => (
+        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+          <span>Reject this vendor? The request will go back to the pool.</span>
+          <div
+            style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}
           >
-            Yes, Reject
-          </button>
-          <button
-            onClick={() => toast.dismiss(t.id)}
-            style={{
-              background: '#e5e7eb',
-              color: '#374151',
-              border: 'none',
-              padding: '6px 12px',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontSize: '14px'
-            }}
-          >
-            Cancel
-          </button>
+            <button
+              onClick={() => {
+                toast.dismiss(t.id);
+                api
+                  .post(`/pickup/reject/${bookingId}/`)
+                  .then(() => {
+                    toast.success("Vendor rejected. Searching for another...");
+                    loadBookings();
+                  })
+                  .catch((err) => {
+                    console.error("Reject Error:", err);
+                    toast.error(
+                      err.response?.data?.error || "Failed to reject vendor",
+                    );
+                  });
+              }}
+              style={{
+                background: "#ef4444",
+                color: "white",
+                border: "none",
+                padding: "6px 12px",
+                borderRadius: "6px",
+                cursor: "pointer",
+                fontSize: "14px",
+              }}
+            >
+              Yes, Reject
+            </button>
+            <button
+              onClick={() => toast.dismiss(t.id)}
+              style={{
+                background: "#e5e7eb",
+                color: "#374151",
+                border: "none",
+                padding: "6px 12px",
+                borderRadius: "6px",
+                cursor: "pointer",
+                fontSize: "14px",
+              }}
+            >
+              Cancel
+            </button>
+          </div>
         </div>
-      </div>
-    ), {
-      duration: 5000,
-      style: {
-        minWidth: '300px'
-      }
-    });
+      ),
+      {
+        duration: 5000,
+        style: {
+          minWidth: "300px",
+        },
+      },
+    );
   };
 
   const openVendorLocation = (booking) => {
@@ -345,14 +359,16 @@ const ClientDashboard = () => {
             {/* Vendor Location */}
             <div className="modal-section">
               <h3>Vendor Information</h3>
-              {["pending", "confirmed"].includes(selectedBooking.status) ? (
+              {["pending", "open"].includes(selectedBooking.status) ? (
                 <div className="vendor-pending">
                   <Clock
                     size={48}
                     style={{ color: "#fbbf24", marginBottom: "12px" }}
                   />
                   <p>Searching for nearby vendors...</p>
-                  <small>Tracking will be available once a vendor is assigned.</small>
+                  <small>
+                    Tracking will be available once a vendor is assigned.
+                  </small>
                 </div>
               ) : selectedBooking.status === "vendor_accepted" ? (
                 <div className="vendor-pending">
@@ -361,16 +377,46 @@ const ClientDashboard = () => {
                     style={{ color: "#f59e0b", marginBottom: "12px" }}
                   />
                   <p>Vendor has accepted!</p>
+
+                  {/* Vendor Details Preview */}
+                  <div className="vendor-location-card" style={{ margin: '15px 0', background: '#fffbeb', border: '1px solid #fcd34d' }}>
+                    <div className="vendor-icon">
+                      <MapPin size={32} />
+                    </div>
+                    <div className="vendor-details">
+                      <h4>{vendorInfo.name}</h4>
+                      <p className="vendor-distance">{vendorInfo.distance}</p>
+                      <p className="vendor-eta">⏱️ ETA: {vendorInfo.eta}</p>
+                    </div>
+                  </div>
+
                   <p>Please approve the vendor to schedule.</p>
-                  <div style={{ display: 'flex', gap: '10px', marginTop: '15px', justifyContent: 'center' }}>
-                    <button className="btn-primary" onClick={() => {
-                      handleApproveVendor(selectedBooking.id);
-                      setSelectedBooking(null);
-                    }}>Approve</button>
-                    <button className="btn-cancel" onClick={() => {
-                      handleRejectVendor(selectedBooking.id);
-                      setSelectedBooking(null);
-                    }}>Reject</button>
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: "10px",
+                      marginTop: "15px",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <button
+                      className="btn-primary"
+                      onClick={() => {
+                        handleApproveVendor(selectedBooking.id);
+                        setSelectedBooking(null);
+                      }}
+                    >
+                      Approve
+                    </button>
+                    <button
+                      className="btn-cancel"
+                      onClick={() => {
+                        handleRejectVendor(selectedBooking.id);
+                        setSelectedBooking(null);
+                      }}
+                    >
+                      Reject
+                    </button>
                   </div>
                 </div>
               ) : (
@@ -450,18 +496,34 @@ const ClientDashboard = () => {
     if (!activeChatPickupId) return null;
 
     return (
-      <div className="location-modal-overlay" onClick={() => setActiveChatPickupId(null)}>
+      <div
+        className="location-modal-overlay"
+        onClick={() => setActiveChatPickupId(null)}
+      >
         <div
           className="location-modal"
           onClick={(e) => e.stopPropagation()}
-          style={{ maxWidth: '450px', padding: '0' }}
+          style={{ maxWidth: "450px", padding: "0" }}
         >
-          <div className="modal-header" style={{ padding: '1rem', borderBottom: '1px solid #eee' }}>
-            <h2 style={{ fontSize: '1.2rem', margin: 0 }}>💬 Chat with Vendor</h2>
-            <button className="modal-close" onClick={() => setActiveChatPickupId(null)}>✕</button>
+          <div
+            className="modal-header"
+            style={{ padding: "1rem", borderBottom: "1px solid #eee" }}
+          >
+            <h2 style={{ fontSize: "1.2rem", margin: 0 }}>
+              💬 Chat with Vendor
+            </h2>
+            <button
+              className="modal-close"
+              onClick={() => setActiveChatPickupId(null)}
+            >
+              ✕
+            </button>
           </div>
-          <div className="modal-body" style={{ padding: '0' }}>
-            <ChatBox pickupId={activeChatPickupId} style={{ border: 'none', boxShadow: 'none', height: '500px' }} />
+          <div className="modal-body" style={{ padding: "0" }}>
+            <ChatBox
+              pickupId={activeChatPickupId}
+              style={{ border: "none", boxShadow: "none", height: "500px" }}
+            />
           </div>
         </div>
       </div>
@@ -654,12 +716,12 @@ const ClientDashboard = () => {
                   onClick={() => setSelectedBooking(booking)}
                 >
                   <MapPin size={16} />
-                  {["pending", "confirmed", "vendor_accepted"].includes(booking.status)
+                  {["pending", "open"].includes(booking.status)
                     ? "View Details"
                     : "Track Vendor"}
                 </button>
 
-                {["pending", "confirmed"].includes(booking.status) && (
+                {["pending", "open"].includes(booking.status) && (
                   <button
                     className="btn-cancel"
                     onClick={() => handleCancelBooking(booking.id)}
@@ -673,7 +735,7 @@ const ClientDashboard = () => {
                   <>
                     <button
                       className="btn-accept" // Reusing verify/accept style
-                      style={{ background: '#dcfce7', color: '#166534' }}
+                      style={{ background: "#dcfce7", color: "#166534" }}
                       onClick={() => handleApproveVendor(booking.id)}
                     >
                       <CheckCircle size={16} />
@@ -690,15 +752,17 @@ const ClientDashboard = () => {
                 )}
 
                 {/* Chat Button - only when vendor is accepted or scheduled */}
-                {["vendor_accepted", "scheduled", "in_progress"].includes(booking.status) && (
-                  <button
-                    className="btn-chat"
-                    onClick={() => setActiveChatPickupId(booking.id)}
-                  >
-                    <MessageCircle size={16} />
-                    Chat
-                  </button>
-                )}
+                {["vendor_accepted", "scheduled", "in_progress"].includes(
+                  booking.status,
+                ) && (
+                    <button
+                      className="btn-chat"
+                      onClick={() => setActiveChatPickupId(booking.id)}
+                    >
+                      <MessageCircle size={16} />
+                      Chat
+                    </button>
+                  )}
               </div>
             </div>
           </div>
@@ -770,51 +834,66 @@ const ClientDashboard = () => {
           <button
             className="btn-danger"
             onClick={() => {
-              toast((t) => (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <span>Are you sure you want to logout?</span>
-                  <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                    <button
-                      onClick={() => {
-                        toast.dismiss(t.id);
-                        logout();
-                        navigate("/");
-                        toast.success("Logged out successfully");
-                      }}
+              toast(
+                (t) => (
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "10px",
+                    }}
+                  >
+                    <span>Are you sure you want to logout?</span>
+                    <div
                       style={{
-                        background: '#ef4444',
-                        color: 'white',
-                        border: 'none',
-                        padding: '6px 12px',
-                        borderRadius: '6px',
-                        cursor: 'pointer',
-                        fontSize: '14px'
+                        display: "flex",
+                        gap: "8px",
+                        justifyContent: "flex-end",
                       }}
                     >
-                      Yes, Logout
-                    </button>
-                    <button
-                      onClick={() => toast.dismiss(t.id)}
-                      style={{
-                        background: '#e5e7eb',
-                        color: '#374151',
-                        border: 'none',
-                        padding: '6px 12px',
-                        borderRadius: '6px',
-                        cursor: 'pointer',
-                        fontSize: '14px'
-                      }}
-                    >
-                      Cancel
-                    </button>
+                      <button
+                        onClick={() => {
+                          toast.dismiss(t.id);
+                          logout();
+                          navigate("/");
+                          toast.success("Logged out successfully");
+                        }}
+                        style={{
+                          background: "#ef4444",
+                          color: "white",
+                          border: "none",
+                          padding: "6px 12px",
+                          borderRadius: "6px",
+                          cursor: "pointer",
+                          fontSize: "14px",
+                        }}
+                      >
+                        Yes, Logout
+                      </button>
+                      <button
+                        onClick={() => toast.dismiss(t.id)}
+                        style={{
+                          background: "#e5e7eb",
+                          color: "#374151",
+                          border: "none",
+                          padding: "6px 12px",
+                          borderRadius: "6px",
+                          cursor: "pointer",
+                          fontSize: "14px",
+                        }}
+                      >
+                        Cancel
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ), {
-                duration: 5000,
-                style: {
-                  minWidth: '300px'
-                }
-              });
+                ),
+                {
+                  duration: 5000,
+                  style: {
+                    minWidth: "300px",
+                  },
+                },
+              );
             }}
           >
             Logout

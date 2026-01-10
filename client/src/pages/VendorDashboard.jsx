@@ -439,7 +439,7 @@ const VendorDashboard = () => {
             </div>
 
             <div className="modal-section">
-              {selectedBooking.status === "confirmed" && !isMyBooking && (
+              {selectedBooking.status === "open" && !isMyBooking && (
                 <button
                   className="btn-accept-booking"
                   onClick={() => {
