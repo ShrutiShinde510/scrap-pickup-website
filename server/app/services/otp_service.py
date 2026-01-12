@@ -25,8 +25,6 @@ class OTPService:
             return mock_otp
 
         try:
-            # Twilio requires E.164 format for phones. 
-            # If channel is 'sms' and no '+', assume +91 for India or default.
             to_contact = contact
             if channel == 'sms' and not contact.startswith('+'):
                 to_contact = f"+91{contact}" 
@@ -51,9 +49,6 @@ class OTPService:
             return True
 
         try:
-            # Ensure consistent contact format
-            to_contact = contact
-            # Simple heuristic: if it looks like a phone number (digits) and no @, treat as SMS/Phone
             if '@' not in contact and not contact.startswith('+'):
                 to_contact = f"+91{contact}"
 

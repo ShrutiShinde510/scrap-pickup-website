@@ -63,7 +63,7 @@ class SellerRegistrationView(GenericAPIView):
     def post(self, request):
         data = request.data
         if hasattr(data, "getlist"):
-            data = data.copy()  # Make mutable
+            data = data.copy()
             scrape_types = data.getlist("scrape_types")
             if scrape_types:
                 data["scrape_types"] = scrape_types
@@ -404,7 +404,6 @@ class ChatView(GenericAPIView):
                 {"error": "Pickup not found"}, status=status.HTTP_404_NOT_FOUND
             )
 
-        # Allow if user is owner or assigned vendor
         if pickup.user != request.user and pickup.assigned_to != request.user:
             return Response(
                 {"error": "Access denied"}, status=status.HTTP_403_FORBIDDEN
@@ -429,8 +428,6 @@ class ChatView(GenericAPIView):
                 {"error": "Access denied"}, status=status.HTTP_403_FORBIDDEN
             )
 
-        # Enforce status check: Chat only allowed after vendor has accepted
-        # Enforce status check: Chat only allowed after vendor has accepted
         if pickup.status not in ["vendor_accepted", "scheduled", "in_progress"]:
            return Response({"error": "Chat not enabled for this status."}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -451,28 +448,22 @@ class AcceptOfferView(GenericAPIView):
             return Response({"error": "Message not found"}, status=status.HTTP_404_NOT_FOUND)
 
         pickup = message.pickup_request
-        # Check permission: Only the recipient can accept
-        # If sender is client, vendor must accept. If sender is vendor, client must accept.
         if message.sender == request.user:
              return Response({"error": "Cannot accept your own offer"}, status=status.HTTP_403_FORBIDDEN)
         
-        # Verify user is part of the pickup
         if request.user not in [pickup.user, pickup.assigned_to]:
              return Response({"error": "Access denied"}, status=status.HTTP_403_FORBIDDEN)
         
         if not message.is_offer or message.offer_status != 'pending':
              return Response({"error": "Invalid offer or already processed"}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Accept logic
         message.offer_status = 'accepted'
         message.save()
 
-        # Update Pickup
         pickup.status = 'scheduled'
         pickup.estimated_price = message.offer_amount
         pickup.save()
         
-        # Create a system message confirming acceptance
         ChatMessage.objects.create(
             pickup_request=pickup,
             sender=request.user,
@@ -505,7 +496,6 @@ class RejectOfferView(GenericAPIView):
         message.offer_status = 'rejected'
         message.save()
         
-        # Create a system message confirming rejection
         ChatMessage.objects.create(
             pickup_request=pickup,
             sender=request.user,

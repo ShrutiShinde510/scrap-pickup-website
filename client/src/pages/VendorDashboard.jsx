@@ -114,7 +114,6 @@ const VendorDashboard = () => {
       updateStats(myRes.data);
     } catch (err) {
       console.error("Error fetching data:", err);
-
     } finally {
       setLoading(false);
     }
@@ -123,7 +122,9 @@ const VendorDashboard = () => {
   const updateStats = (bookings) => {
     const stats = {
       totalAssigned: bookings.length,
-      pendingPickups: bookings.filter((b) => ["vendor_accepted", "scheduled", "in_progress"].includes(b.status)).length,
+      pendingPickups: bookings.filter((b) =>
+        ["vendor_accepted", "scheduled", "in_progress"].includes(b.status),
+      ).length,
       completedPickups: bookings.filter((b) => b.status === "completed").length,
       totalEarnings: bookings
         .filter((b) => b.status === "completed")
@@ -150,10 +151,11 @@ const VendorDashboard = () => {
     setShowScrapSelection(false);
   };
 
-  const filteredAvailableBookings = availableBookings.filter(b =>
-    selectedScrapTypes.length === 0 || selectedScrapTypes.includes(b.scrap_type)
+  const filteredAvailableBookings = availableBookings.filter(
+    (b) =>
+      selectedScrapTypes.length === 0 ||
+      selectedScrapTypes.includes(b.scrap_type),
   );
-
 
   const handleAcceptBooking = async (bookingId) => {
     try {
@@ -167,72 +169,83 @@ const VendorDashboard = () => {
     }
   };
 
-
   const handleCancelAcceptance = async (bookingId) => {
-    toast((t) => (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-        <span>Cancel this pickup? It will be released back to other vendors.</span>
-        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-          <button
-            onClick={() => {
-              toast.dismiss(t.id);
-              api.post(`/pickup/vendor-cancel/${bookingId}/`)
-                .then(() => {
-                  toast.success("Pickup cancelled successfully.");
-                  fetchAllData();
-                  setSelectedBooking(null);
-                })
-                .catch((err) => {
-                  console.error("Cancel Error:", err);
-                  toast.error(err.response?.data?.error || "Failed to cancel pickup");
-                });
-            }}
-            style={{
-              background: '#ef4444',
-              color: 'white',
-              border: 'none',
-              padding: '6px 12px',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontSize: '14px'
-            }}
+    toast(
+      (t) => (
+        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+          <span>
+            Cancel this pickup? It will be released back to other vendors.
+          </span>
+          <div
+            style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}
           >
-            Yes, Cancel
-          </button>
-          <button
-            onClick={() => toast.dismiss(t.id)}
-            style={{
-              background: '#e5e7eb',
-              color: '#374151',
-              border: 'none',
-              padding: '6px 12px',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontSize: '14px'
-            }}
-          >
-            No
-          </button>
+            <button
+              onClick={() => {
+                toast.dismiss(t.id);
+                api
+                  .post(`/pickup/vendor-cancel/${bookingId}/`)
+                  .then(() => {
+                    toast.success("Pickup cancelled successfully.");
+                    fetchAllData();
+                    setSelectedBooking(null);
+                  })
+                  .catch((err) => {
+                    console.error("Cancel Error:", err);
+                    toast.error(
+                      err.response?.data?.error || "Failed to cancel pickup",
+                    );
+                  });
+              }}
+              style={{
+                background: "#ef4444",
+                color: "white",
+                border: "none",
+                padding: "6px 12px",
+                borderRadius: "6px",
+                cursor: "pointer",
+                fontSize: "14px",
+              }}
+            >
+              Yes, Cancel
+            </button>
+            <button
+              onClick={() => toast.dismiss(t.id)}
+              style={{
+                background: "#e5e7eb",
+                color: "#374151",
+                border: "none",
+                padding: "6px 12px",
+                borderRadius: "6px",
+                cursor: "pointer",
+                fontSize: "14px",
+              }}
+            >
+              No
+            </button>
+          </div>
         </div>
-      </div>
-    ), {
-      duration: 5000,
-      style: {
-        minWidth: '300px'
-      }
-    });
+      ),
+      {
+        duration: 5000,
+        style: {
+          minWidth: "300px",
+        },
+      },
+    );
   };
 
   const handleCompleteBooking = async (bookingId) => {
     toast("Marking as complete is not yet enabled.", { icon: "🚧" });
   };
 
-
-
   const getStatusBadge = (status) => {
     const badges = {
       confirmed: { color: "#3b82f6", icon: Package, text: "Available" },
-      vendor_accepted: { color: "#f59e0b", icon: Clock, text: "Pending Approval" },
+      vendor_accepted: {
+        color: "#f59e0b",
+        icon: Clock,
+        text: "Pending Approval",
+      },
       scheduled: { color: "#8b5cf6", icon: Calendar, text: "Scheduled" },
       in_progress: { color: "#8b5cf6", icon: TrendingUp, text: "In Progress" },
       completed: { color: "#10b981", icon: CheckCircle, text: "Completed" },
@@ -276,9 +289,9 @@ const VendorDashboard = () => {
     const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
       Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     const distance = R * c;
     return distance.toFixed(1);
@@ -296,8 +309,6 @@ const VendorDashboard = () => {
       "_blank",
     );
   };
-
-
 
   const renderScrapSelectionModal = () => {
     if (!showScrapSelection) return null;
@@ -344,7 +355,14 @@ const VendorDashboard = () => {
                 >
                   Save & Continue ({selectedScrapTypes.length} selected)
                 </button>
-                <p style={{ textAlign: "center", marginTop: "12px", fontSize: "13px", color: "#6b7280" }}>
+                <p
+                  style={{
+                    textAlign: "center",
+                    marginTop: "12px",
+                    fontSize: "13px",
+                    color: "#6b7280",
+                  }}
+                >
                   You can change this later in settings
                 </p>
               </div>
@@ -358,7 +376,7 @@ const VendorDashboard = () => {
   const renderBookingModal = () => {
     if (!selectedBooking) return null;
 
-    const isMyBooking = myBookings.find(b => b.id === selectedBooking.id);
+    const isMyBooking = myBookings.find((b) => b.id === selectedBooking.id);
 
     return (
       <div
@@ -394,11 +412,15 @@ const VendorDashboard = () => {
                 </div>
                 <div className="modal-info-item">
                   <span className="modal-label">Est. Weight:</span>
-                  <span className="modal-value">{selectedBooking.quantity} kg</span>
+                  <span className="modal-value">
+                    {selectedBooking.quantity} kg
+                  </span>
                 </div>
                 <div className="modal-info-item">
                   <span className="modal-label">Est. Price:</span>
-                  <span className="modal-value" style={{ color: "#059669" }}>₹{selectedBooking.estimated_price || '0'}</span>
+                  <span className="modal-value" style={{ color: "#059669" }}>
+                    ₹{selectedBooking.estimated_price || "0"}
+                  </span>
                 </div>
                 {selectedBooking.latitude && (
                   <div className="modal-info-item">
@@ -412,20 +434,30 @@ const VendorDashboard = () => {
             </div>
 
             <div className="modal-section">
-              <div className="pickup-location-card" style={{ marginBottom: "12px" }}>
+              <div
+                className="pickup-location-card"
+                style={{ marginBottom: "12px" }}
+              >
                 <MapPin size={20} style={{ color: "#059669" }} />
                 <div>
                   <p className="pickup-address">{selectedBooking.address}</p>
                   {selectedBooking.city && (
-                    <p className="pickup-city">
-                      {selectedBooking.city}
-                    </p>
+                    <p className="pickup-city">{selectedBooking.city}</p>
                   )}
                 </div>
               </div>
 
               {selectedBooking.latitude && (
-                <div className="map-container" style={{ width: "100%", height: "200px", borderRadius: "12px", overflow: "hidden", border: "1px solid #e5e7eb" }}>
+                <div
+                  className="map-container"
+                  style={{
+                    width: "100%",
+                    height: "200px",
+                    borderRadius: "12px",
+                    overflow: "hidden",
+                    border: "1px solid #e5e7eb",
+                  }}
+                >
                   <iframe
                     width="100%"
                     height="100%"
@@ -452,11 +484,13 @@ const VendorDashboard = () => {
               )}
 
               {selectedBooking.status === "vendor_accepted" && isMyBooking && (
-                <div style={{ textAlign: 'center', width: '100%' }}>
-                  <p style={{ marginBottom: '10px', color: '#f59e0b' }}>Waiting for client to approve...</p>
+                <div style={{ textAlign: "center", width: "100%" }}>
+                  <p style={{ marginBottom: "10px", color: "#f59e0b" }}>
+                    Waiting for client to approve...
+                  </p>
                   <button
                     className="btn-complete-booking" // Reusing style but red
-                    style={{ background: '#fee2e2', color: '#ef4444' }}
+                    style={{ background: "#fee2e2", color: "#ef4444" }}
                     onClick={() => {
                       handleCancelAcceptance(selectedBooking.id);
                     }}
@@ -467,34 +501,43 @@ const VendorDashboard = () => {
                 </div>
               )}
 
-              {["scheduled", "in_progress"].includes(selectedBooking.status) && isMyBooking && (
-                <div style={{ display: 'flex', gap: '10px', flexDirection: 'column' }}>
-                  <button
-                    className="btn-track-maps"
-                    onClick={() => openClientLocation(selectedBooking)}
-                  >
-                    <Navigation size={18} /> Navigate to Location
-                  </button>
-                  {selectedBooking.contact_phone && (
-                    <button
-                      className="btn-call-vendor"
-                      onClick={() => window.open(`tel:${selectedBooking.contact_phone}`)}
-                    >
-                      <Phone size={18} /> Call Client: {selectedBooking.contact_phone}
-                    </button>
-                  )}
-                  {/* Active Chat Button */}
-                  <button
-                    className="btn-chat"
-                    onClick={() => {
-                      setActiveChatPickupId(selectedBooking.id);
-                      setSelectedBooking(null); // Close details modal
+              {["scheduled", "in_progress"].includes(selectedBooking.status) &&
+                isMyBooking && (
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: "10px",
+                      flexDirection: "column",
                     }}
                   >
-                    <MessageCircle size={18} /> Chat with Client
-                  </button>
-                </div>
-              )}
+                    <button
+                      className="btn-track-maps"
+                      onClick={() => openClientLocation(selectedBooking)}
+                    >
+                      <Navigation size={18} /> Navigate to Location
+                    </button>
+                    {selectedBooking.contact_phone && (
+                      <button
+                        className="btn-call-vendor"
+                        onClick={() =>
+                          window.open(`tel:${selectedBooking.contact_phone}`)
+                        }
+                      >
+                        <Phone size={18} /> Call Client:{" "}
+                        {selectedBooking.contact_phone}
+                      </button>
+                    )}
+                    <button
+                      className="btn-chat"
+                      onClick={() => {
+                        setActiveChatPickupId(selectedBooking.id);
+                        setSelectedBooking(null); // Close details modal
+                      }}
+                    >
+                      <MessageCircle size={18} /> Chat with Client
+                    </button>
+                  </div>
+                )}
             </div>
           </div>
         </div>
@@ -502,23 +545,38 @@ const VendorDashboard = () => {
     );
   };
 
-
   const renderChatModal = () => {
     if (!activeChatPickupId) return null;
 
     return (
-      <div className="location-modal-overlay" onClick={() => setActiveChatPickupId(null)}>
+      <div
+        className="location-modal-overlay"
+        onClick={() => setActiveChatPickupId(null)}
+      >
         <div
           className="location-modal"
           onClick={(e) => e.stopPropagation()}
-          style={{ maxWidth: '450px', padding: '0' }}
+          style={{ maxWidth: "450px", padding: "0" }}
         >
-          <div className="modal-header" style={{ padding: '1rem', borderBottom: '1px solid #eee' }}>
-            <h2 style={{ fontSize: '1.2rem', margin: 0 }}>💬 Chat with Client</h2>
-            <button className="modal-close" onClick={() => setActiveChatPickupId(null)}>✕</button>
+          <div
+            className="modal-header"
+            style={{ padding: "1rem", borderBottom: "1px solid #eee" }}
+          >
+            <h2 style={{ fontSize: "1.2rem", margin: 0 }}>
+              💬 Chat with Client
+            </h2>
+            <button
+              className="modal-close"
+              onClick={() => setActiveChatPickupId(null)}
+            >
+              ✕
+            </button>
           </div>
-          <div className="modal-body" style={{ padding: '0' }}>
-            <ChatBox pickupId={activeChatPickupId} style={{ border: 'none', boxShadow: 'none', height: '500px' }} />
+          <div className="modal-body" style={{ padding: "0" }}>
+            <ChatBox
+              pickupId={activeChatPickupId}
+              style={{ border: "none", boxShadow: "none", height: "500px" }}
+            />
           </div>
         </div>
       </div>
@@ -600,13 +658,19 @@ const VendorDashboard = () => {
         </div>
 
         {filteredAvailableBookings.slice(0, 3).map((booking) => (
-          <div key={booking.id} className="booking-card" onClick={() => setSelectedBooking(booking)}>
+          <div
+            key={booking.id}
+            className="booking-card"
+            onClick={() => setSelectedBooking(booking)}
+          >
             <div className="booking-header">
               <div className="booking-id">
                 <Package size={16} />
                 <span>#{booking.id}</span>
               </div>
-              <span className="distance-badge">{calculateDistance(booking)} km</span>
+              <span className="distance-badge">
+                {calculateDistance(booking)} km
+              </span>
             </div>
 
             <div className="booking-details">
@@ -620,7 +684,9 @@ const VendorDashboard = () => {
               </div>
               <div className="detail-row">
                 <span className="label">Location:</span>
-                <span className="value truncate" style={{ maxWidth: '150px' }}>{booking.address}</span>
+                <span className="value truncate" style={{ maxWidth: "150px" }}>
+                  {booking.address}
+                </span>
               </div>
             </div>
             <button className="btn-action-sm">View Details</button>
@@ -648,15 +714,25 @@ const VendorDashboard = () => {
       </div>
       <div className="bookings-grid">
         {filteredAvailableBookings.map((booking) => (
-          <div key={booking.id} className="booking-card" onClick={() => setSelectedBooking(booking)}>
+          <div
+            key={booking.id}
+            className="booking-card"
+            onClick={() => setSelectedBooking(booking)}
+          >
             <div className="booking-header">
               <span className="booking-hash">#{booking.id}</span>
-              <span className="distance-badge">{calculateDistance(booking)} km</span>
+              <span className="distance-badge">
+                {calculateDistance(booking)} km
+              </span>
             </div>
             <div className="booking-body">
               <h3>{booking.scrap_type} Scrap</h3>
-              <p>{booking.quantity} kg • ₹{booking.estimated_price || '?'}</p>
-              <p className="address-text"><MapPin size={12} /> {booking.address}</p>
+              <p>
+                {booking.quantity} kg • ₹{booking.estimated_price || "?"}
+              </p>
+              <p className="address-text">
+                <MapPin size={12} /> {booking.address}
+              </p>
             </div>
             <div className="booking-footer">
               <button className="btn-accept-sm">Review & Accept</button>
@@ -664,7 +740,7 @@ const VendorDashboard = () => {
           </div>
         ))}
         {filteredAvailableBookings.length === 0 && (
-          <div className="empty-state" style={{ gridColumn: '1/-1' }}>
+          <div className="empty-state" style={{ gridColumn: "1/-1" }}>
             No available pickups found.
           </div>
         )}
@@ -683,7 +759,9 @@ const VendorDashboard = () => {
             <div className="booking-card-header">
               <div>
                 <h3>#{booking.id}</h3>
-                <p className="booking-date">{new Date(booking.created_at).toLocaleDateString()}</p>
+                <p className="booking-date">
+                  {new Date(booking.created_at).toLocaleDateString()}
+                </p>
               </div>
               {getStatusBadge(booking.status)}
             </div>
@@ -703,11 +781,15 @@ const VendorDashboard = () => {
               </div>
             </div>
             <div className="booking-card-footer">
-              <button className="btn-view-details" onClick={() => setSelectedBooking(booking)}>
+              <button
+                className="btn-view-details"
+                onClick={() => setSelectedBooking(booking)}
+              >
                 View Details / Actions
               </button>
-              {/* Quick Chat from list */}
-              {["vendor_accepted", "scheduled", "in_progress"].includes(booking.status) && (
+              {["vendor_accepted", "scheduled", "in_progress"].includes(
+                booking.status,
+              ) && (
                 <button
                   className="btn-chat-icon"
                   onClick={(e) => {
@@ -723,7 +805,7 @@ const VendorDashboard = () => {
           </div>
         ))}
         {myBookings.length === 0 && (
-          <div className="empty-state" style={{ gridColumn: '1/-1' }}>
+          <div className="empty-state" style={{ gridColumn: "1/-1" }}>
             You haven't accepted any pickups yet.
           </div>
         )}

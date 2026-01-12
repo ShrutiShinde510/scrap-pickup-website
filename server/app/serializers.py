@@ -23,7 +23,6 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
 class ClientRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
-    # Override email to drop the unique validator so we can handle existing users in create()
     email = serializers.EmailField()
 
     class Meta:
@@ -47,7 +46,6 @@ class ClientRegistrationSerializer(serializers.ModelSerializer):
             self.fields['email'].validators = []
 
     def validate(self, attrs):
-        # We can do custom validation here if needed
         return attrs
 
     def create(self, validated_data):
@@ -61,10 +59,8 @@ class ClientRegistrationSerializer(serializers.ModelSerializer):
             if not user.check_password(password):
                  raise serializers.ValidationError({"password": ["Account with this email exists, but password incorrect."]})
             
-            # Link Profile: Update to be a client
             user.is_client = True
             
-            # Update other fields if provided (and not empty)
             for attr, value in validated_data.items():
                 if attr not in ['email', 'password'] and value:
                     setattr(user, attr, value)
@@ -73,7 +69,6 @@ class ClientRegistrationSerializer(serializers.ModelSerializer):
             return user
             
         except User.DoesNotExist:
-            # Create new user
             validated_data["is_client"] = True
             return User.objects.create_user(**validated_data)
 
@@ -83,7 +78,6 @@ class SellerRegistrationSerializer(serializers.ModelSerializer):
     scrape_types = serializers.ListField(
         child=serializers.CharField(max_length=50), allow_empty=True, required=False
     )
-    # Override email to drop unique validator
     email = serializers.EmailField()
 
     class Meta:
@@ -120,14 +114,11 @@ class SellerRegistrationSerializer(serializers.ModelSerializer):
         # Check if user exists
         try:
             user = User.objects.get(email=email)
-             # User exists, verify password
             if not user.check_password(password):
                  raise serializers.ValidationError({"password": ["Account with this email exists, but password incorrect."]})
             
-            # Link Profile: Update to be a seller
             user.is_seller = True
 
-             # Update other fields logic 
             for attr, value in validated_data.items():
                 if attr not in ['email', 'password'] and value:
                     setattr(user, attr, value)
